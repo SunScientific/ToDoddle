@@ -1,0 +1,78 @@
+/* ── Scratch-through animation ── */
+.task-text {
+  position: relative;
+  display: inline;
+}
+
+.task-item.done .task-text::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  height: 2px;
+  width: 100%;
+  background: var(--color-accent);
+  border-radius: 2px;
+  transform: translateY(-50%);
+}
+
+/* Animate scratch when first marked done */
+.task-item.done.just-done .task-text::after {
+  width: 0%;
+  animation: scratch 0.35s ease-out forwards;
+}
+
+@keyframes scratch {
+  from { width: 0%; }
+  to   { width: 100%; }
+}
+
+/* ── Fade in new task ── */
+@keyframes fadeSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.task-item.new-task {
+  animation: fadeSlideIn 0.25s ease-out forwards;
+}
+
+/* ── Fade out deleted task ── */
+@keyframes fadeSlideOut {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+    max-height: 80px;
+    margin-bottom: 8px;
+  }
+  to {
+    opacity: 0;
+    transform: translateX(16px);
+    max-height: 0;
+    margin-bottom: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+}
+
+.task-item.removing {
+  animation: fadeSlideOut 0.25s ease-in forwards;
+  overflow: hidden;
+}
+
+/* ── Day reset pulse on date ── */
+@keyframes pulse {
+  0%   { opacity: 1; }
+  50%  { opacity: 0.4; }
+  100% { opacity: 1; }
+}
+
+.date-day.resetting {
+  animation: pulse 0.6s ease-in-out 2;
+}

@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ToDoddle</title>
+  <link rel="stylesheet" href="styles/main.css" />
+  <link rel="stylesheet" href="styles/typography.css" />
+  <link rel="stylesheet" href="styles/components.css" />
+  <link rel="stylesheet" href="styles/animations.css" />
+</head>
+<body>
+
+  <!-- Custom title bar -->
+  <div class="titlebar">
+    <span class="titlebar-title">TODODDLE</span>
+    <div class="titlebar-controls">
+      <button class="btn-minimize" id="btn-minimize" title="Minimize">&#x2013;</button>
+      <button class="btn-close"    id="btn-close"    title="Close">&#x2715;</button>
+    </div>
+  </div>
+
+  <!-- Main card -->
+  <div class="app-card">
+
+    <!-- Date header (always visible) -->
+    <div class="date-header">
+      <div class="date-display">
+        <span class="date-day" id="date-day">--</span>
+      </div>
+      <div class="date-meta">
+        <span class="date-weekday-month" id="date-weekday-month">--- -----</span>
+        <span class="clock" id="clock">--:-- --</span>
+      </div>
+    </div>
+
+    <!-- Tab navigation -->
+    <nav class="tab-nav">
+      <button class="tab-btn active" data-tab="today">TODAY</button>
+      <button class="tab-btn"        data-tab="history">HISTORY</button>
+      <button class="tab-btn"        data-tab="summary">WEEKLY</button>
+    </nav>
+
+    <!-- ── TODAY VIEW ── -->
+    <div class="view" id="view-today">
+
+      <div class="progress-section">
+        <div class="progress-bar-track">
+          <div class="progress-bar-fill" id="progress-bar"></div>
+        </div>
+        <span class="progress-label" id="progress-label">0 / 0 done</span>
+      </div>
+
+      <div class="add-task-section">
+        <div class="input-row">
+          <input
+            type="text"
+            id="task-input"
+            class="task-input"
+            placeholder="what's the doodle?"
+            maxlength="80"
+            autocomplete="off"
+            spellcheck="false"
+          />
+          <button class="btn-add" id="btn-add">+</button>
+        </div>
+        <div class="category-row" id="category-row">
+          <!-- Category pills rendered by JS -->
+        </div>
+      </div>
+
+      <!-- Carry-over banner -->
+      <div class="carryover-banner hidden" id="carryover-banner">
+        <span class="carryover-icon">📋</span>
+        <span class="carryover-msg" id="carryover-msg"></span>
+        <div class="carryover-btns">
+          <button class="carryover-btn yes" id="carryover-yes">ADD</button>
+          <button class="carryover-btn no"  id="carryover-no">SKIP</button>
+        </div>
+      </div>
+
+      <div class="task-list-wrapper">
+        <ul class="task-list" id="task-list"></ul>
+        <div class="empty-state" id="empty-state">
+          <p>no doodles yet!</p>
+          <p>add one above ↑</p>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ── HISTORY VIEW ── -->
+    <div class="view hidden" id="view-history">
+
+      <div class="calendar-section">
+        <div class="cal-nav">
+          <button class="cal-arrow" id="cal-prev">&#9664;</button>
+          <span class="cal-month-label" id="cal-month-label">--- ----</span>
+          <button class="cal-arrow" id="cal-next">&#9654;</button>
+        </div>
+        <div class="cal-weekdays">
+          <span>MO</span><span>TU</span><span>WE</span>
+          <span>TH</span><span>FR</span><span>SA</span><span>SU</span>
+        </div>
+        <div class="cal-grid" id="cal-grid"></div>
+      </div>
+
+      <div class="history-divider"></div>
+
+      <div class="history-tasks-section">
+        <div class="history-date-label" id="history-date-label">SELECT A DATE</div>
+        <div class="task-list-wrapper history-tasks">
+          <ul class="task-list" id="history-task-list"></ul>
+          <div class="empty-state history-empty visible" id="history-empty-state">
+            <p>← pick a date</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ── SUMMARY VIEW ── -->
+    <div class="view hidden" id="view-summary">
+
+      <div class="summary-scroll">
+
+        <div class="week-header" id="week-header">THIS WEEK</div>
+
+        <!-- 7-day strip -->
+        <div class="week-days-strip" id="week-days-strip">
+          <!-- Rendered by JS -->
+        </div>
+
+        <!-- Category breakdown -->
+        <div class="summary-section-title">BY CATEGORY</div>
+        <div class="category-bars" id="category-bars">
+          <!-- Rendered by JS -->
+        </div>
+
+        <!-- Stats row -->
+        <div class="stats-row" id="stats-row">
+          <!-- Rendered by JS -->
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <script src="renderer.js"></script>
+</body>
+</html>
