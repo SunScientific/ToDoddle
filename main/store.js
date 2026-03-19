@@ -14,6 +14,7 @@ const schema = {
         id:        { type: 'string' },
         text:      { type: 'string' },
         done:      { type: 'boolean' },
+        priority:  { type: 'boolean' },
         category:  { type: 'string' },
         createdAt: { type: 'string' }
       }
@@ -118,12 +119,12 @@ function listArchiveDates() {
   }
 }
 
-function getWeekData() {
+function getWeekData(offsetWeeks = 0) {
   const d = new Date();
   const dow = d.getDay(); // 0=Sun
   const mondayOffset = dow === 0 ? -6 : 1 - dow;
   const monday = new Date(d);
-  monday.setDate(d.getDate() + mondayOffset);
+  monday.setDate(d.getDate() + mondayOffset + offsetWeeks * 7);
   monday.setHours(0, 0, 0, 0);
   const todayStr = today();
 
@@ -146,6 +147,61 @@ function getWeekData() {
   });
 }
 
+function getMonthData(year, month) {
+  const todayStr = today();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const days = [];
+
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    if (dateStr > todayStr) break;
+    let dayTasks = dateStr === todayStr ? getTasks() : (getArchive(dateStr)?.tasks || []);
+    days.push({ date: dateStr, tasks: dayTasks });
+  }
+
+  // KPI calculations
+  const allTasks   = days.flatMap(d => d.tasks);
+  const total      = allTasks.length;
+  const completed  = allTasks.filter(t => t.done).length;
+  const rate       = total === 0 ? 0 : Math.round((completed / total) * 100);
+  const activeDays = days.filter(d => d.tasks.length > 0);
+  const perfectDays = days.filter(d => d.tasks.length > 0 && d.tasks.every(t => t.done)).length;
+  const avgPerDay  = activeDays.length === 0 ? 0 : +(total / activeDays.length).toFixed(1);
+
+  // Longest streak of consecutive days with at least one task
+  let streak = 0, maxStreak = 0, cur = 0;
+  days.forEach(d => {
+    if (d.tasks.length > 0) { cur++; maxStreak = Math.max(maxStreak, cur); }
+    else cur = 0;
+  });
+
+  // Top category
+  const catCounts = {};
+  allTasks.forEach(t => { const c = t.category || 'other'; catCounts[c] = (catCounts[c] || 0) + 1; });
+  const topCat = Object.entries(catCounts).sort((a, b) => b[1] - a[1])[0];
+
+  // Best day (most completed)
+  let bestDay = null, bestCount = 0;
+  days.forEach(d => {
+    const done = d.tasks.filter(t => t.done).length;
+    if (done > bestCount) { bestCount = done; bestDay = d.date; }
+  });
+
+  // Weekly breakdown (group into Mon-Sun chunks)
+  const weeks = [];
+  for (let i = 0; i < days.length; i += 7) {
+    const chunk = days.slice(i, i + 7);
+    const wTotal = chunk.flatMap(d => d.tasks).length;
+    const wDone  = chunk.flatMap(d => d.tasks).filter(t => t.done).length;
+    weeks.push({ total: wTotal, done: wDone, rate: wTotal === 0 ? 0 : Math.round((wDone / wTotal) * 100) });
+  }
+
+  return {
+    days,
+    kpis: { total, completed, rate, perfectDays, avgPerDay, maxStreak, topCategory: topCat ? topCat[0] : null, bestDay, weeks }
+  };
+}
+
 function reorderTasks(orderedIds) {
   const tasks = getTasks();
   const map = Object.fromEntries(tasks.map(t => [t.id, t]));
@@ -154,12 +210,34 @@ function reorderTasks(orderedIds) {
   return reordered;
 }
 
+function prioritizeTask(id) {
+  const tasks = getTasks().map(t => t.id === id ? { ...t, priority: !t.priority } : t);
+  store.set('tasks', tasks);
+  return tasks;
+}
+
 function updateTask(id, newText) {
   const text = (newText || '').trim();
   if (!text) return getTasks();
   const tasks = getTasks().map(t => t.id === id ? { ...t, text } : t);
   store.set('tasks', tasks);
   return tasks;
+}
+
+function deleteArchivedTask(date, taskId) {
+  const archiveFile = path.join(getArchiveDir(), `${date}.json`);
+  try {
+    const data = JSON.parse(fs.readFileSync(archiveFile, 'utf8'));
+    data.tasks = data.tasks.filter(t => t.id !== taskId);
+    data.summary = {
+      total:     data.tasks.length,
+      completed: data.tasks.filter(t => t.done).length
+    };
+    fs.writeFileSync(archiveFile, JSON.stringify(data, null, 2));
+    return data.tasks;
+  } catch {
+    return [];
+  }
 }
 
 function getYesterdayUnfinished() {
@@ -174,10 +252,18 @@ function getYesterdayUnfinished() {
 function listArchiveSummaries() {
   return listArchiveDates().map(date => {
     const archive = getArchive(date);
+    if (!archive) return { date, total: 0, completed: 0, topCategory: null };
+    const catCounts = {};
+    (archive.tasks || []).forEach(t => {
+      const c = t.category || 'other';
+      catCounts[c] = (catCounts[c] || 0) + 1;
+    });
+    const top = Object.entries(catCounts).sort((a, b) => b[1] - a[1])[0];
     return {
       date,
-      total:     archive ? archive.summary.total     : 0,
-      completed: archive ? archive.summary.completed : 0
+      total:       archive.summary.total,
+      completed:   archive.summary.completed,
+      topCategory: top ? top[0] : null
     };
   });
 }
@@ -189,6 +275,8 @@ module.exports = {
   addTask,
   toggleTask,
   deleteTask,
+  deleteArchivedTask,
+  prioritizeTask,
   reorderTasks,
   updateTask,
   getYesterdayUnfinished,
@@ -198,5 +286,6 @@ module.exports = {
   setCurrentDate,
   getArchive,
   listArchiveDates,
-  getWeekData
+  getWeekData,
+  getMonthData
 };

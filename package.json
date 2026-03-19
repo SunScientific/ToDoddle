@@ -1,18 +1,43 @@
 {
   "name": "tododdle",
   "version": "1.0.0",
-  "description": "",
+  "description": "A cute pixel-art daily task manager",
   "main": "main/main.js",
   "scripts": {
     "start": "electron .",
-    "dev": "electron . --inspect"
+    "dev": "electron . --inspect",
+    "build": "electron-builder --win --x64"
   },
   "keywords": [],
-  "author": "",
+  "author": "Sun Scientific",
   "license": "ISC",
   "type": "commonjs",
+  "build": {
+    "appId": "com.sunscientific.tododdle",
+    "productName": "ToDoddle",
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "assets/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    },
+    "files": [
+      "main/**/*",
+      "renderer/**/*",
+      "node_modules/**/*",
+      "package.json"
+    ]
+  },
   "devDependencies": {
-    "electron": "^41.0.3"
+    "electron": "^41.0.3",
+    "electron-builder": "^26.8.1"
   },
   "dependencies": {
     "electron-store": "^8.2.0"

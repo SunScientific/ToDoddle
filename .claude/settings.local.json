@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cmd.exe /c \"dir /b /s \"\"C:\\\\Users\\\\SanatRathod\\\\OneDrive - Sun Scientific\\\\Code\\\\ToDoddle\\\\node_modules\\\\electron\\\\dist\\\\electron.exe\"\"\")"
+    ]
+  }
+}

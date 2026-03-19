@@ -1,10 +1,10 @@
 const { app, BrowserWindow, ipcMain, Tray, Menu, nativeImage } = require('electron');
 const path = require('path');
 const {
-  getTasks, addTask, toggleTask, deleteTask,
+  getTasks, addTask, toggleTask, deleteTask, deleteArchivedTask, prioritizeTask,
   reorderTasks, updateTask, getYesterdayUnfinished, listArchiveSummaries,
   today, getCurrentDate, setCurrentDate,
-  getArchive, listArchiveDates, getWeekData
+  getArchive, listArchiveDates, getWeekData, getMonthData
 } = require('./store');
 const { startMidnightWatch, stopMidnightWatch } = require('./scheduler');
 
@@ -23,9 +23,9 @@ function buildTrayIcon() {
       const cx = x - W / 2 + 0.5, cy = y - H / 2 + 0.5;
       const i = y * rowSize + 1 + x * 3;
       if (Math.sqrt(cx * cx + cy * cy) <= W / 2 - 0.5) {
-        raw[i] = 58; raw[i+1] = 158; raw[i+2] = 95; // #3a9e5f
+        raw[i] = 192; raw[i+1] = 38; raw[i+2] = 211; // #c026d3 magenta
       } else {
-        raw[i] = 235; raw[i+1] = 248; raw[i+2] = 240; // bg colour
+        raw[i] = 18; raw[i+1] = 8; raw[i+2] = 42; // dark purple bg
       }
     }
   }
@@ -81,7 +81,7 @@ function createWindow() {
     resizable: true,
     frame: false,
     titleBarStyle: 'hidden',
-    backgroundColor: '#ebf8f0',
+    backgroundColor: '#12082a',
     webPreferences: {
       preload: path.join(__dirname, '../renderer/preload.js'),
       contextIsolation: true,
@@ -126,8 +126,9 @@ ipcMain.handle('add-task', (_, text, category) => {
   return addTask(text, category);
 });
 
-ipcMain.handle('toggle-task',  (_, id) => toggleTask(id));
-ipcMain.handle('delete-task',  (_, id) => deleteTask(id));
+ipcMain.handle('toggle-task',     (_, id) => toggleTask(id));
+ipcMain.handle('delete-task',     (_, id) => deleteTask(id));
+ipcMain.handle('prioritize-task', (_, id) => prioritizeTask(id));
 
 ipcMain.handle('get-date', () => {
   const d = new Date();
@@ -140,10 +141,12 @@ ipcMain.handle('get-date', () => {
   };
 });
 
-ipcMain.handle('get-archive',       (_, date) => getArchive(date));
-ipcMain.handle('list-archive-dates', ()        => listArchiveDates());
-ipcMain.handle('get-week-data',      ()        => getWeekData());
+ipcMain.handle('get-archive',        (_, date)           => getArchive(date));
+ipcMain.handle('list-archive-dates', ()                  => listArchiveDates());
+ipcMain.handle('get-week-data',      (_, offset = 0)     => getWeekData(offset));
+ipcMain.handle('get-month-data',     (_, year, month)    => getMonthData(year, month));
 
+ipcMain.handle('delete-archived-task',     (_, date, id)  => deleteArchivedTask(date, id));
 ipcMain.handle('reorder-tasks',            (_, ids)       => reorderTasks(ids));
 ipcMain.handle('update-task',              (_, id, text)  => updateTask(id, text));
 ipcMain.handle('get-yesterday-unfinished', ()             => getYesterdayUnfinished());

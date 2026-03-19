@@ -66,6 +66,58 @@
   overflow: hidden;
 }
 
+/* ── Avatar rider ── */
+.avatar-rider {
+  position: absolute;
+  top: 6px;
+  margin-left: -24px;       /* center 48px-wide avatar on anchor point */
+  width: 48px;
+  height: 52px;
+  pointer-events: none;
+  z-index: 5;
+  transition: left 0.45s cubic-bezier(0.4,0,0.2,1), opacity 0.3s;
+}
+
+/* Face & arm state switching */
+.avatar-rider .face-neutral,
+.avatar-rider .face-sad,
+.avatar-rider .face-happy  { display: none; }
+.avatar-rider .arms-up     { display: none; }
+.avatar-rider .avatar-sparkles { display: none; }
+
+.avatar-rider[data-state="none"] .face-neutral { display: block; }
+.avatar-rider[data-state="sad"]  .face-sad     { display: block; }
+.avatar-rider[data-state="ok"]   .face-happy   { display: block; }
+.avatar-rider[data-state="done"] .face-happy   { display: block; }
+.avatar-rider[data-state="done"] .arms-up      { display: block; }
+.avatar-rider[data-state="done"] .arms-normal  { display: none; }
+.avatar-rider[data-state="done"] .avatar-sparkles { display: block; }
+.avatar-rider[data-state="done"] { animation: avatar-dance 0.55s ease-in-out infinite; }
+
+/* Sparkles above head */
+.avatar-sparkles {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 13px;
+  white-space: nowrap;
+  animation: sparkle-pop 0.7s ease-in-out infinite alternate;
+}
+
+@keyframes avatar-dance {
+  0%   { transform: translateY(0)    rotate(0deg);  }
+  20%  { transform: translateY(-7px) rotate(-6deg); }
+  45%  { transform: translateY(-3px) rotate(4deg);  }
+  70%  { transform: translateY(-8px) rotate(-4deg); }
+  100% { transform: translateY(0)    rotate(0deg);  }
+}
+
+@keyframes sparkle-pop {
+  from { transform: translateX(-50%) scale(0.85); opacity: 0.7; }
+  to   { transform: translateX(-50%) scale(1.2);  opacity: 1;   }
+}
+
 /* ── Day reset pulse on date ── */
 @keyframes pulse {
   0%   { opacity: 1; }

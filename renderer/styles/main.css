@@ -1,16 +1,16 @@
-/* ── Palette ── */
+/* ── Palette — Jujutsu Kaisen ── */
 :root {
-  --color-bg:           #d4edda;
-  --color-card:         #f0faf3;
-  --color-accent:       #3a9e5f;
-  --color-accent-light: #6abf85;
-  --color-accent-pale:  #b7dfca;
-  --color-text:         #14532d;
-  --color-text-mid:     #2d7a4a;
-  --color-muted:        #6abf85;
-  --color-done-text:    #a3d9b4;
-  --color-border:       #c3e6cb;
-  --color-shadow:       rgba(20, 83, 45, 0.12);
+  --color-bg:           #12082a;
+  --color-card:         #1c1040;
+  --color-accent:       #c026d3;
+  --color-accent-light: #e040fb;
+  --color-accent-pale:  #3d1a5c;
+  --color-text:         #f0e6ff;
+  --color-text-mid:     #c4b5fd;
+  --color-muted:        #7c5a9e;
+  --color-done-text:    #6b4d8a;
+  --color-border:       #3b1a6e;
+  --color-shadow:       rgba(192, 38, 211, 0.25);
 
   --radius-card:   20px;
   --radius-input:  12px;
@@ -26,7 +26,8 @@ html, body {
   width: 100%;
   height: 100%;
   overflow: hidden;
-  background: linear-gradient(160deg, #d4edda 0%, #b9dfc7 100%);
+  background: radial-gradient(ellipse at 30% 0%, #2d0a4e 0%, #0d0618 55%),
+              linear-gradient(180deg, #1a0a2e 0%, #080412 100%);
   user-select: none;
   -webkit-user-select: none;
 }
@@ -58,7 +59,8 @@ body {
   background: var(--color-card);
   border-radius: var(--radius-card);
   border: 2px solid var(--color-border);
-  box-shadow: 0 8px 32px var(--color-shadow), 0 2px 8px var(--color-shadow);
+  box-shadow: 0 8px 32px var(--color-shadow), 0 2px 8px var(--color-shadow),
+              0 0 0 1px rgba(192, 38, 211, 0.12), inset 0 1px 0 rgba(192, 38, 211, 0.08);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -68,7 +70,8 @@ body {
 
 /* ── Date header ── */
 .date-header {
-  background: linear-gradient(135deg, var(--color-accent) 0%, var(--color-accent-light) 100%);
+  background: linear-gradient(135deg, #5b21b6 0%, #c026d3 60%, #e040fb 100%);
+  box-shadow: 0 4px 24px rgba(192, 38, 211, 0.35);
   padding: 16px 24px 12px;
   display: flex;
   flex-direction: column;
@@ -120,7 +123,8 @@ body {
 
 /* ── Progress section ── */
 .progress-section {
-  padding: 12px 18px 8px;
+  padding: 64px 18px 10px;   /* extra top room for avatar */
+  position: relative;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -138,9 +142,10 @@ body {
 .progress-bar-fill {
   height: 100%;
   width: 0%;
-  background: linear-gradient(90deg, var(--color-accent) 0%, var(--color-accent-light) 100%);
+  background: linear-gradient(90deg, #7c3aed 0%, #c026d3 50%, #e040fb 100%);
   border-radius: 999px;
   transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 0 10px rgba(192, 38, 211, 0.5);
 }
 
 /* ── Add task section ── */
@@ -183,74 +188,262 @@ body {
 }
 .empty-state.visible { display: flex; }
 
-/* ── History view ── */
-.calendar-section {
-  padding: 10px 14px 8px;
-  border-bottom: 1px solid var(--color-border);
-  flex-shrink: 0;
+/* ── History view — heatmap calendar + detail panel ── */
+#view-history {
+  overflow: hidden;
+  flex-direction: column;
 }
+#view-history.hidden { display: none; }
+
+.calendar-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 10px 14px 12px;
+  overflow: hidden;
+  gap: 6px;
+  min-height: 0;
+}
+
 .cal-nav {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 10px;
+  flex-shrink: 0;
 }
+
+/* Legend strip */
+.cal-legend {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.cal-legend-label {
+  font-family: var(--font-pixel);
+  font-size: 5px;
+  color: var(--color-muted);
+}
+.cal-legend-swatch {
+  width: 11px;
+  height: 11px;
+  border-radius: 3px;
+  border: 1px solid rgba(0,0,0,0.08);
+}
+.cal-legend-swatch[data-heat="0"] { background: #1e0a3a; }
+.cal-legend-swatch[data-heat="1"] { background: #4c1d95; }
+.cal-legend-swatch[data-heat="2"] { background: #7c3aed; }
+.cal-legend-swatch[data-heat="3"] { background: #a855f7; }
+.cal-legend-swatch[data-heat="4"] { background: #d946ef; }
+
 .cal-weekdays {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  margin-bottom: 4px;
+  flex-shrink: 0;
 }
 .cal-weekdays span {
   font-family: var(--font-pixel);
   font-size: 6px;
   color: var(--color-muted);
   text-align: center;
-  padding: 3px 0;
+  padding: 2px 0;
 }
+
 .cal-grid {
+  flex: 1;
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 3px;
-}
-
-.history-divider {
-  height: 1px;
-  background: var(--color-border);
-  flex-shrink: 0;
-}
-
-.history-tasks-section {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
+  grid-auto-rows: 1fr;
+  gap: 4px;
   min-height: 0;
-  padding-top: 8px;
 }
-.history-tasks { flex: 1; min-height: 0; }
-.history-empty { padding: 20px; }
 
-/* History summary chips */
-.history-summary-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 5px;
-  padding: 0 14px 8px;
+/* ── Heatmap cell colours — JJK purple scale ── */
+.cal-cell[data-heat="0"] { background: #1e0a3a; color: var(--color-muted); }
+.cal-cell[data-heat="1"] { background: #4c1d95; color: #c4b5fd; }
+.cal-cell[data-heat="2"] { background: #7c3aed; color: #fff; }
+.cal-cell[data-heat="3"] { background: #a855f7; color: #fff; }
+.cal-cell[data-heat="4"] { background: #d946ef; color: #fff; }
+
+/* ✓ badge for 100% done days */
+.cal-cell[data-alldone="1"]::after {
+  content: '✓';
+  position: absolute;
+  top: 2px;
+  right: 3px;
+  font-size: 7px;
+  opacity: 0.75;
+  font-family: sans-serif;
+  line-height: 1;
 }
-.history-chip {
+.cal-cell { position: relative; }
+
+/* ── History detail panel ── */
+.hist-detail {
+  flex-shrink: 0;
+  border-top: 1px solid var(--color-border);
+  padding: 8px 14px 6px;
+  max-height: 200px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-accent-pale) transparent;
+}
+.hist-detail.hidden { display: none; }
+.hist-detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+.hist-detail-date {
+  font-family: var(--font-pixel);
+  font-size: 7px;
+  color: var(--color-text);
+}
+.hist-detail-summary {
   font-family: var(--font-pixel);
   font-size: 6px;
-  padding: 3px 8px;
-  border-radius: 999px;
-  white-space: nowrap;
-}
-.history-chip.done-chip {
-  background: var(--color-accent-pale);
   color: var(--color-text-mid);
 }
-.history-chip.cat-chip {
-  background: var(--cat-color);
-  color: #fff;
-  opacity: 0.9;
+.hist-detail-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.hist-task-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--color-bg);
+  border-radius: 8px;
+  padding: 5px 8px;
+}
+.hist-task-row.done .hist-task-txt {
+  text-decoration: line-through;
+  color: var(--color-done-text);
+}
+.hist-task-chk {
+  font-size: 9px;
+  color: var(--color-accent);
+  flex-shrink: 0;
+  width: 14px;
+  text-align: center;
+}
+.hist-task-txt {
+  flex: 1;
+  font-size: 10px;
+  color: var(--color-text);
+}
+.hist-detail-empty {
+  font-family: var(--font-pixel);
+  font-size: 6px;
+  color: var(--color-muted);
+  text-align: center;
+  padding: 12px;
+}
+.hist-detail-empty.hidden { display: none; }
+
+/* ── History task delete button ── */
+.hist-task-del {
+  width: 20px; height: 20px;
+  background: transparent; border: none;
+  color: var(--color-muted); font-size: 16px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 4px; flex-shrink: 0;
+  opacity: 0;
+  transition: color 0.2s, background 0.2s, opacity 0.15s;
+  line-height: 1;
+  margin-left: auto;
+}
+.hist-task-row:hover .hist-task-del { opacity: 1; }
+.hist-task-del:hover { color: #c0392b; background: rgba(192, 57, 43, 0.12); }
+
+/* ── Week nav row ── */
+.week-nav-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.week-arrow {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 10px;
+  color: var(--color-muted);
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: color 0.15s, background 0.15s;
+}
+.week-arrow:hover:not(:disabled) { color: var(--color-text); background: var(--color-accent-pale); }
+.week-arrow:disabled { opacity: 0.3; cursor: default; }
+
+/* ── Monthly KPI grid ── */
+.monthly-title { margin-top: 4px; }
+.monthly-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+.monthly-kpi-card {
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  padding: 8px 4px 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+.mkpi-icon  { font-size: 14px; line-height: 1; }
+.mkpi-value {
+  font-family: var(--font-pixel);
+  font-size: 7px;
+  color: var(--color-text);
+  font-weight: bold;
+}
+.mkpi-label {
+  font-family: var(--font-pixel);
+  font-size: 4.5px;
+  color: var(--color-muted);
+  letter-spacing: 0.5px;
+  text-align: center;
+}
+
+/* ── Monthly weekly breakdown bars ── */
+.monthly-week-bars { display: flex; flex-direction: column; gap: 6px; }
+.mweek-row   { display: flex; align-items: center; gap: 8px; }
+.mweek-label {
+  font-family: var(--font-pixel);
+  font-size: 6px;
+  color: var(--color-muted);
+  width: 18px;
+  flex-shrink: 0;
+}
+.mweek-track {
+  flex: 1;
+  height: 8px;
+  background: var(--color-accent-pale);
+  border-radius: 999px;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+}
+.mweek-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #7c3aed 0%, #d946ef 100%);
+  border-radius: 999px;
+  transition: width 0.4s ease;
+  box-shadow: 0 0 6px rgba(192, 38, 211, 0.4);
+}
+.mweek-count {
+  font-family: var(--font-pixel);
+  font-size: 6px;
+  color: var(--color-text-mid);
+  width: 30px;
+  text-align: right;
+  flex-shrink: 0;
 }
 
 /* ── Summary view ── */
