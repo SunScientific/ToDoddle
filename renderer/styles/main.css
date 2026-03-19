@@ -79,6 +79,7 @@ body {
   gap: 6px;
   border-bottom: 2px solid var(--color-border);
   flex-shrink: 0;
+  animation: hue-drift 9s ease-in-out infinite; /* #8 */
 }
 .date-display { display: flex; align-items: baseline; }
 .date-meta {
@@ -94,22 +95,35 @@ body {
   border-bottom: 2px solid var(--color-border);
   flex-shrink: 0;
   background: var(--color-card);
+  position: relative; /* #9: needed for sliding indicator */
 }
 .tab-btn {
   flex: 1;
   padding: 10px 4px;
   background: transparent;
   border: none;
-  border-bottom: 3px solid transparent;
+  border-bottom: 3px solid transparent; /* keep for layout; replaced visually by indicator */
   cursor: pointer;
   font-family: var(--font-pixel);
   font-size: 7px;
   color: var(--color-muted);
-  transition: color 0.2s, border-color 0.2s;
+  transition: color 0.2s;
   margin-bottom: -2px;
 }
 .tab-btn:hover  { color: var(--color-text-mid); }
-.tab-btn.active { color: var(--color-text); border-bottom-color: var(--color-accent); }
+.tab-btn.active { color: var(--color-text); } /* border-bottom replaced by #tab-indicator */
+
+/* #9: sliding tab underline indicator */
+.tab-indicator {
+  position: absolute;
+  bottom: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #7c3aed, #e040fb);
+  border-radius: 3px 3px 0 0;
+  transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 0 10px rgba(192, 38, 211, 0.7), 0 0 4px rgba(224, 64, 251, 0.5);
+  pointer-events: none;
+}
 
 /* ── Views ── */
 .view {
@@ -387,6 +401,7 @@ body {
   grid-template-columns: repeat(4, 1fr);
   gap: 6px;
 }
+/* #3: 3D tilt on KPI cards */
 .monthly-kpi-card {
   background: var(--color-bg);
   border: 1px solid var(--color-border);
@@ -396,6 +411,13 @@ body {
   flex-direction: column;
   align-items: center;
   gap: 3px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  cursor: default;
+  will-change: transform;
+}
+.monthly-kpi-card:hover {
+  box-shadow: 0 6px 24px rgba(192, 38, 211, 0.35);
+  border-color: rgba(192, 38, 211, 0.45);
 }
 .mkpi-icon  { width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; }
 .mkpi-icon svg { width: 16px; height: 16px; }

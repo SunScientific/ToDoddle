@@ -67,6 +67,14 @@ btnMinimize.addEventListener('click', () => api.minimize());
 btnClose.addEventListener('click',    () => api.close());
 
 // ── Tab navigation ─────────────────────────────────────────────────────────
+// #9: sliding tab indicator
+function updateTabIndicator(activeBtn) {
+  const indicator = document.getElementById('tab-indicator');
+  if (!indicator || !activeBtn) return;
+  indicator.style.left  = activeBtn.offsetLeft + 'px';
+  indicator.style.width = activeBtn.offsetWidth + 'px';
+}
+
 document.querySelectorAll('.tab-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     const tab = btn.dataset.tab;
@@ -75,6 +83,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
 
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
+    updateTabIndicator(btn);
 
     document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
     document.getElementById(`view-${tab}`).classList.remove('hidden');
@@ -83,6 +92,15 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     if (tab === 'summary') initSummaryView();
   });
 });
+// init indicator on first load (disable transition so it snaps into place)
+{
+  const indicator = document.getElementById('tab-indicator');
+  if (indicator) indicator.style.transition = 'none';
+  updateTabIndicator(document.querySelector('.tab-btn.active'));
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    if (indicator) indicator.style.transition = '';
+  }));
+}
 
 // ── Clock ──────────────────────────────────────────────────────────────────
 function updateClock() {
@@ -110,7 +128,7 @@ function renderCategoryPills() {
   CATEGORIES.forEach(cat => {
     const pill = document.createElement('button');
     pill.className = 'cat-pill' + (cat.id === selectedCategory ? ' selected' : '');
-    pill.textContent = cat.label;
+    pill.innerHTML = `<span style="position:relative;z-index:1">${cat.label}</span>`;
     pill.style.setProperty('--cat-color', cat.color);
     pill.addEventListener('click', () => {
       selectedCategory = cat.id;
@@ -233,7 +251,18 @@ async function handlePrioritize(id, li, pinBtn) {
   li.classList.toggle('priority', isPriority);
   pinBtn.classList.toggle('active', isPriority);
   pinBtn.title = isPriority ? 'Unpin task' : 'Pin to top';
+  // Swap image immediately on toggle
+  const img = pinBtn.querySelector('.sukuna-pin-img');
+  if (img) img.src = isPriority ? 'sukuna.png' : 'normalsukuna.png';
   renderTaskList();
+  // Shake the newly-rendered element when pinned
+  if (isPriority) {
+    const newLi = taskList.querySelector(`[data-id="${id}"]`);
+    if (newLi) {
+      newLi.classList.add('just-pinned');
+      setTimeout(() => newLi.classList.remove('just-pinned'), 700);
+    }
+  }
 }
 
 function createTaskEl(task, isNew = false) {
@@ -281,7 +310,7 @@ function createTaskEl(task, isNew = false) {
 
   const pin = document.createElement('button');
   pin.className = 'btn-pin' + (task.priority ? ' active' : '');
-  pin.textContent = '📌';
+  pin.innerHTML = `<img src="${task.priority ? 'sukuna.png' : 'normalsukuna.png'}" class="sukuna-pin-img" draggable="false" alt="pin" />`;
   pin.title = task.priority ? 'Unpin task' : 'Pin to top';
   pin.setAttribute('aria-label', pin.title);
   pin.addEventListener('click', () => handlePrioritize(task.id, li, pin));
@@ -331,7 +360,13 @@ async function handleToggle(id, li) {
   if (!task) return;
   if (task.done) {
     li.classList.add('done', 'just-done');
-    li.querySelector('.task-checkbox').classList.add('checked');
+    const cb = li.querySelector('.task-checkbox');
+    cb.classList.add('checked');
+    // #4: cursed energy burst ripple
+    const ripple = document.createElement('span');
+    ripple.className = 'checkbox-ripple';
+    cb.appendChild(ripple);
+    setTimeout(() => ripple.remove(), 500);
     setTimeout(() => li.classList.remove('just-done'), 400);
   } else {
     li.classList.remove('done', 'just-done');
@@ -744,6 +779,14 @@ function renderMonthlyKPIs(monthData, now) {
     card.innerHTML = `<span class="mkpi-icon">${kpiIcons[label] || ''}</span>
                       <span class="mkpi-value">${value}</span>
                       <span class="mkpi-label">${label}</span>`;
+    // #3: 3D tilt on mousemove
+    card.addEventListener('mousemove', e => {
+      const r = card.getBoundingClientRect();
+      const x = ((e.clientX - r.left)  / r.width  - 0.5) * 2;
+      const y = ((e.clientY - r.top)   / r.height - 0.5) * 2;
+      card.style.transform = `perspective(280px) rotateY(${x * 9}deg) rotateX(${-y * 9}deg) scale(1.06)`;
+    });
+    card.addEventListener('mouseleave', () => { card.style.transform = ''; });
     grid.appendChild(card);
   });
 

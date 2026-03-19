@@ -49,14 +49,30 @@
   font-family: var(--font-pixel);
   font-size: 7px;
   cursor: pointer;
-  transition: background 0.15s, color 0.15s;
+  transition: color 0.22s, box-shadow 0.22s;
   white-space: nowrap;
+  /* #2: fill animation */
+  position: relative;
+  overflow: hidden;
 }
+/* fill layer slides in from left on hover */
+.cat-pill::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--cat-color, #6abf85);
+  border-radius: inherit;
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 0;
+}
+.cat-pill:hover:not(.selected)::before { transform: scaleX(1); }
+.cat-pill:hover:not(.selected) { color: #fff; box-shadow: 0 0 10px rgba(255,255,255,0.15); }
 .cat-pill.selected {
   background: var(--cat-color, #6abf85);
   color: #fff;
 }
-.cat-pill:hover:not(.selected) { opacity: 0.8; }
 
 /* ── Carry-over banner ── */
 .carryover-banner {
@@ -133,6 +149,8 @@
   display: flex; align-items: center; justify-content: center;
   margin-top: 1px;
   transition: background 0.2s, border-color 0.2s;
+  position: relative; /* needed for ripple positioning */
+  overflow: visible;
 }
 .task-checkbox.checked { background: var(--color-accent); border-color: var(--color-accent); }
 .task-checkbox.checked::after { content: '✓'; color: #fff; font-size: 10px; font-weight: bold; line-height: 1; }
@@ -181,34 +199,51 @@
   width: 100%;
 }
 
-/* ── Priority / pinned task — vivid red-pink ── */
+/* ── Priority / pinned task — ON FIRE ── */
 .task-item.priority {
-  border-color: #f43f5e;
-  border-left: 4px solid #f43f5e;
-  background: rgba(244, 63, 94, 0.1);
-  box-shadow: 0 0 14px rgba(244, 63, 94, 0.22);
+  border-color: #ff6a00;
+  border-left: 4px solid #ff8c00;
+  background: linear-gradient(135deg, rgba(255, 90, 0, 0.13) 0%, rgba(255, 40, 0, 0.06) 100%);
+  animation: fire-glow 1.6s ease-in-out infinite;
 }
 .task-item.priority .task-text {
-  color: #fda4af;
+  color: #ffb07a;
   font-weight: bold;
 }
 
-/* ── Pin button ── */
+/* ── Pin button — Sukuna ── */
 .btn-pin {
-  width: 22px; height: 22px;
+  width: 30px; height: 30px;
   background: transparent; border: none;
-  font-size: 13px;
   cursor: pointer;
   display: flex; align-items: center; justify-content: center;
   border-radius: 4px; flex-shrink: 0;
-  opacity: 0.55;
-  transition: opacity 0.2s, transform 0.15s;
-  line-height: 1;
-  filter: grayscale(1);
+  transition: transform 0.2s;
+  padding: 0;
 }
-.task-item:hover .btn-pin          { opacity: 0.85; }
-.btn-pin.active                    { opacity: 1; filter: none; transform: rotate(-20deg); }
-.btn-pin.active:hover              { transform: rotate(0deg); }
+.sukuna-pin-img {
+  width: 26px;
+  height: auto;
+  display: block;
+  /* normalsukuna shows at natural colour, slightly dimmed */
+  filter: brightness(0.75) saturate(0.85);
+  transition: filter 0.3s, transform 0.2s;
+}
+.task-item:hover .sukuna-pin-img {
+  filter: brightness(1) saturate(1);
+  transform: scale(1.08);
+}
+/* Active = sukuna.png with full fire aura */
+.btn-pin.active .sukuna-pin-img {
+  filter:
+    brightness(1.1)
+    drop-shadow(0  0px 3px #ff8c00)
+    drop-shadow(0 -3px 6px #ff4500)
+    drop-shadow(0  3px 4px #ff2200);
+  animation: sukuna-pulse 0.9s ease-in-out infinite alternate;
+}
+.btn-pin.active:hover .sukuna-pin-img { transform: scale(1.18); }
+.btn-pin:hover:not(.active) .sukuna-pin-img { transform: scale(1.1); }
 
 /* ── Delete button ── */
 .btn-delete {

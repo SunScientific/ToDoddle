@@ -43,27 +43,17 @@
   animation: fadeSlideIn 0.25s ease-out forwards;
 }
 
-/* ── Fade out deleted task ── */
+/* ── Fade out deleted task — implodes inward ── */
 @keyframes fadeSlideOut {
-  from {
-    opacity: 1;
-    transform: translateX(0);
-    max-height: 80px;
-    margin-bottom: 8px;
-  }
-  to {
-    opacity: 0;
-    transform: translateX(16px);
-    max-height: 0;
-    margin-bottom: 0;
-    padding-top: 0;
-    padding-bottom: 0;
-  }
+  0%   { opacity: 1; transform: scale(1);    max-height: 80px; margin-bottom: 8px; }
+  40%  { opacity: 0.6; transform: scale(0.92); }
+  100% { opacity: 0; transform: scale(0.75); max-height: 0; margin-bottom: 0; padding-top: 0; padding-bottom: 0; }
 }
 
 .task-item.removing {
-  animation: fadeSlideOut 0.25s ease-in forwards;
+  animation: fadeSlideOut 0.28s cubic-bezier(0.4, 0, 1, 1) forwards;
   overflow: hidden;
+  transform-origin: center;
 }
 
 /* ── Avatar rider ── */
@@ -122,6 +112,119 @@
 @keyframes sparkle-pop {
   from { transform: translateX(-50%) scale(0.85); opacity: 0.7; }
   to   { transform: translateX(-50%) scale(1.2);  opacity: 1;   }
+}
+
+/* ── Priority task FIRE glow ── */
+@keyframes fire-glow {
+  0%   {
+    box-shadow: 0 0 8px  rgba(255, 90,  0, 0.55),
+                0 0 20px rgba(255, 40,  0, 0.25),
+                inset 0 0 6px rgba(255, 80, 0, 0.06);
+    border-color: #ff5500;
+  }
+  30%  {
+    box-shadow: 0 0 16px rgba(255, 140, 0, 0.75),
+                0 0 36px rgba(255, 90,  0, 0.45),
+                inset 0 0 10px rgba(255, 120, 0, 0.1);
+    border-color: #ff9200;
+  }
+  60%  {
+    box-shadow: 0 0 22px rgba(255, 180, 0, 0.85),
+                0 0 48px rgba(255, 140, 0, 0.5),
+                inset 0 0 14px rgba(255, 150, 0, 0.12);
+    border-color: #ffb300;
+  }
+  100% {
+    box-shadow: 0 0 8px  rgba(255, 90,  0, 0.55),
+                0 0 20px rgba(255, 40,  0, 0.25),
+                inset 0 0 6px rgba(255, 80, 0, 0.06);
+    border-color: #ff5500;
+  }
+}
+
+/* ── Priority task shake (triggers on pin) ── */
+@keyframes task-shake {
+  0%   { transform: translateX(0)    rotate(0deg); }
+  10%  { transform: translateX(-3px) rotate(-1deg); }
+  20%  { transform: translateX( 3px) rotate( 1deg); }
+  30%  { transform: translateX(-3px) rotate(-0.8deg); }
+  40%  { transform: translateX( 3px) rotate( 0.8deg); }
+  55%  { transform: translateX(-2px) rotate(-0.4deg); }
+  70%  { transform: translateX( 2px) rotate( 0.4deg); }
+  85%  { transform: translateX(-1px); }
+  100% { transform: translateX(0)    rotate(0deg); }
+}
+.task-item.just-pinned {
+  animation: task-shake 0.6s cubic-bezier(0.36, 0.07, 0.19, 0.97) forwards !important;
+}
+
+/* ── Sukuna icon pulse when active ── */
+@keyframes sukuna-pulse {
+  from {
+    filter: grayscale(0) brightness(1.05)
+      drop-shadow(0  0px 3px #ff8c00)
+      drop-shadow(0 -3px 6px #ff4500)
+      drop-shadow(0  3px 4px #ff2200);
+  }
+  to {
+    filter: grayscale(0) brightness(1.2)
+      drop-shadow(0  0px 6px #ffaa00)
+      drop-shadow(0 -5px 10px #ff6600)
+      drop-shadow(0  4px 7px #ff3300);
+  }
+}
+
+/* ── #1: Task item hover — cursed energy glow pulse ── */
+@keyframes task-glow {
+  0%, 100% { box-shadow: 0 0 0px rgba(192, 38, 211, 0);    border-color: var(--color-border); }
+  50%       { box-shadow: 0 0 18px rgba(192, 38, 211, 0.45); border-color: rgba(192, 38, 211, 0.5); }
+}
+.task-item:hover:not(.done):not(.removing):not(.priority) {
+  animation: task-glow 1.8s ease-in-out infinite;
+}
+
+/* ── #4: Checkbox burst ripple ── */
+.checkbox-ripple {
+  position: absolute;
+  inset: -1px;
+  border-radius: 4px;
+  background: rgba(192, 38, 211, 0.55);
+  pointer-events: none;
+  animation: checkbox-burst 0.5s ease-out forwards;
+  z-index: 10;
+}
+@keyframes checkbox-burst {
+  0%   { transform: scale(1);   opacity: 0.9; }
+  100% { transform: scale(3.2); opacity: 0; }
+}
+
+/* ── #7: Progress bar shimmer sweep ── */
+.progress-bar-fill {
+  position: relative;
+  overflow: hidden;
+}
+.progress-bar-fill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -60%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.35), transparent);
+  animation: shimmer-sweep 2s ease-in-out infinite;
+  border-radius: inherit;
+}
+@keyframes shimmer-sweep {
+  0%   { left: -60%; }
+  100% { left: 160%; }
+}
+
+/* ── #8: Date header living gradient ── */
+@keyframes hue-drift {
+  0%   { filter: hue-rotate(0deg)   brightness(1); }
+  33%  { filter: hue-rotate(18deg)  brightness(1.06); }
+  66%  { filter: hue-rotate(-12deg) brightness(1.03); }
+  100% { filter: hue-rotate(0deg)   brightness(1); }
 }
 
 /* ── Day reset pulse on date ── */
