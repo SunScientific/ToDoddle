@@ -123,7 +123,7 @@ body {
 
 /* ── Progress section ── */
 .progress-section {
-  padding: 64px 18px 10px;   /* extra top room for avatar */
+  padding: 110px 18px 10px;   /* extra top room for Gojo avatar */
   position: relative;
   display: flex;
   align-items: center;
@@ -353,13 +353,13 @@ body {
   cursor: pointer;
   display: flex; align-items: center; justify-content: center;
   border-radius: 4px; flex-shrink: 0;
-  opacity: 0;
+  opacity: 0.55;
   transition: color 0.2s, background 0.2s, opacity 0.15s;
   line-height: 1;
   margin-left: auto;
 }
 .hist-task-row:hover .hist-task-del { opacity: 1; }
-.hist-task-del:hover { color: #c0392b; background: rgba(192, 57, 43, 0.12); }
+.hist-task-del:hover { color: #f43f5e; background: rgba(244, 63, 94, 0.14); }
 
 /* ── Week nav row ── */
 .week-nav-row {

@@ -181,15 +181,15 @@
   width: 100%;
 }
 
-/* ── Priority / pinned task — JJK magenta ── */
+/* ── Priority / pinned task — vivid red-pink ── */
 .task-item.priority {
-  border-color: #c026d3;
-  border-left: 4px solid #e040fb;
-  background: rgba(192, 38, 211, 0.1);
-  box-shadow: 0 0 12px rgba(224, 64, 251, 0.18);
+  border-color: #f43f5e;
+  border-left: 4px solid #f43f5e;
+  background: rgba(244, 63, 94, 0.1);
+  box-shadow: 0 0 14px rgba(244, 63, 94, 0.22);
 }
 .task-item.priority .task-text {
-  color: #e879f9;
+  color: #fda4af;
   font-weight: bold;
 }
 
@@ -201,12 +201,12 @@
   cursor: pointer;
   display: flex; align-items: center; justify-content: center;
   border-radius: 4px; flex-shrink: 0;
-  opacity: 0.25;
+  opacity: 0.55;
   transition: opacity 0.2s, transform 0.15s;
   line-height: 1;
   filter: grayscale(1);
 }
-.task-item:hover .btn-pin          { opacity: 0.6; }
+.task-item:hover .btn-pin          { opacity: 0.85; }
 .btn-pin.active                    { opacity: 1; filter: none; transform: rotate(-20deg); }
 .btn-pin.active:hover              { transform: rotate(0deg); }
 
@@ -219,7 +219,7 @@
   border-radius: 4px; flex-shrink: 0; margin-top: 0px;
   transition: color 0.2s, background 0.2s; line-height: 1;
 }
-.btn-delete:hover { color: #c0392b; background: rgba(192, 57, 43, 0.1); }
+.btn-delete:hover { color: #f43f5e; background: rgba(244, 63, 94, 0.12); }
 
 /* ── Calendar ── */
 .cal-arrow {

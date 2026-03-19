@@ -135,10 +135,17 @@ function updateProgress() {
   if (!rider) return;
 
   // State
+  const prevState = rider.dataset.state;
   if      (total === 0)        rider.dataset.state = 'none';
   else if (done === total)     rider.dataset.state = 'done';
   else if (pct >= 50)          rider.dataset.state = 'ok';
   else                         rider.dataset.state = 'sad';
+
+  // Swap image based on state
+  const gojoImg = document.getElementById('gojo-img');
+  if (gojoImg) {
+    gojoImg.src = rider.dataset.state === 'done' ? 'gojohappy.png' : 'gojosad.png';
+  }
 
   rider.style.opacity = total === 0 ? '0' : '1';
 

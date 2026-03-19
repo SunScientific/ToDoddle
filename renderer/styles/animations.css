@@ -69,28 +69,34 @@
 /* ── Avatar rider ── */
 .avatar-rider {
   position: absolute;
-  top: 6px;
-  margin-left: -24px;       /* center 48px-wide avatar on anchor point */
-  width: 48px;
-  height: 52px;
+  top: -28px;
+  margin-left: -46px;
+  width: 92px;
+  height: auto;
   pointer-events: none;
   z-index: 5;
   transition: left 0.45s cubic-bezier(0.4,0,0.2,1), opacity 0.3s;
 }
 
-/* Face & arm state switching */
-.avatar-rider .face-neutral,
-.avatar-rider .face-sad,
-.avatar-rider .face-happy  { display: none; }
-.avatar-rider .arms-up     { display: none; }
-.avatar-rider .avatar-sparkles { display: none; }
+.gojo-img {
+  width: 92px;
+  height: auto;
+  display: block;
+  image-rendering: auto;
+  transition: filter 0.3s;
+  filter:
+    drop-shadow( 2px  0px 0 white)
+    drop-shadow(-2px  0px 0 white)
+    drop-shadow( 0px  2px 0 white)
+    drop-shadow( 0px -2px 0 white)
+    drop-shadow( 1.5px  1.5px 0 white)
+    drop-shadow(-1.5px  1.5px 0 white)
+    drop-shadow( 1.5px -1.5px 0 white)
+    drop-shadow(-1.5px -1.5px 0 white);
+}
 
-.avatar-rider[data-state="none"] .face-neutral { display: block; }
-.avatar-rider[data-state="sad"]  .face-sad     { display: block; }
-.avatar-rider[data-state="ok"]   .face-happy   { display: block; }
-.avatar-rider[data-state="done"] .face-happy   { display: block; }
-.avatar-rider[data-state="done"] .arms-up      { display: block; }
-.avatar-rider[data-state="done"] .arms-normal  { display: none; }
+
+.avatar-rider .avatar-sparkles { display: none; }
 .avatar-rider[data-state="done"] .avatar-sparkles { display: block; }
 .avatar-rider[data-state="done"] { animation: avatar-dance 0.55s ease-in-out infinite; }
 
