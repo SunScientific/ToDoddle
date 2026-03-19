@@ -718,19 +718,30 @@ function renderMonthlyKPIs(monthData, now) {
     ? new Date(kpis.bestDay + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
     : '–';
 
+  const kpiIcons = {
+    TOTAL:         `<svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="2" y="2" width="12" height="12" rx="2" stroke="#c026d3" stroke-width="1.5"/><line x1="5" y1="5.5" x2="11" y2="5.5" stroke="#c026d3" stroke-width="1.2" stroke-linecap="round"/><line x1="5" y1="8" x2="11" y2="8" stroke="#c026d3" stroke-width="1.2" stroke-linecap="round"/><line x1="5" y1="10.5" x2="8.5" y2="10.5" stroke="#c026d3" stroke-width="1.2" stroke-linecap="round"/></svg>`,
+    DONE:          `<svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="8" cy="8" r="5.5" stroke="#c026d3" stroke-width="1.5"/><polyline points="5.5,8 7.2,9.8 10.5,6.2" stroke="#c026d3" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+    RATE:          `<svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><polyline points="2,12 6,7 9,10 14,4" stroke="#c026d3" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><polyline points="11,4 14,4 14,7" stroke="#c026d3" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+    'PERFECT DAYS':`<svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><polygon points="8,2 9.8,6.2 14.2,6.5 11,9.5 12,13.8 8,11.5 4,13.8 5,9.5 1.8,6.5 6.2,6.2" stroke="#c026d3" stroke-width="1.2" stroke-linejoin="round"/></svg>`,
+    STREAK:        `<svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 2 C9 2 11 5 9.5 7 C11 6.5 13 8 11.5 11 C12.5 10.5 13.5 12 12 13.5 C10.5 14.8 7.5 15 6 13 C4 11 5 8.5 7 8 C6 6.5 6.5 4 9 2Z" stroke="#c026d3" stroke-width="1.2" stroke-linejoin="round"/></svg>`,
+    'AVG / DAY':   `<svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="2" y="9" width="2.5" height="5" rx="0.5" fill="#c026d3"/><rect x="6" y="6" width="2.5" height="8" rx="0.5" fill="#c026d3"/><rect x="10" y="3.5" width="2.5" height="10.5" rx="0.5" fill="#c026d3"/><line x1="2" y1="14.5" x2="14" y2="14.5" stroke="#c026d3" stroke-width="1" stroke-linecap="round"/></svg>`,
+    'TOP CAT':     `<svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><polygon points="8,2 14,13.5 2,13.5" stroke="#c026d3" stroke-width="1.3" stroke-linejoin="round"/><line x1="8" y1="6" x2="8" y2="10" stroke="#c026d3" stroke-width="1.3" stroke-linecap="round"/><circle cx="8" cy="12" r="0.7" fill="#c026d3"/></svg>`,
+    'BEST DAY':    `<svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="2" y="3" width="12" height="11" rx="1.5" stroke="#c026d3" stroke-width="1.3"/><line x1="5.5" y1="2" x2="5.5" y2="5" stroke="#c026d3" stroke-width="1.3" stroke-linecap="round"/><line x1="10.5" y1="2" x2="10.5" y2="5" stroke="#c026d3" stroke-width="1.3" stroke-linecap="round"/><line x1="2" y1="7" x2="14" y2="7" stroke="#c026d3" stroke-width="1"/><circle cx="8" cy="10.5" r="1.5" fill="#c026d3"/></svg>`,
+  };
+
   [
-    { icon: '📋', label: 'TOTAL',        value: kpis.total },
-    { icon: '✅', label: 'DONE',         value: kpis.completed },
-    { icon: '📈', label: 'RATE',         value: `${kpis.rate}%` },
-    { icon: '⭐', label: 'PERFECT DAYS', value: kpis.perfectDays },
-    { icon: '🔥', label: 'STREAK',       value: `${kpis.maxStreak}d` },
-    { icon: '📊', label: 'AVG / DAY',    value: kpis.avgPerDay },
-    { icon: '🏆', label: 'TOP CAT',      value: topCatLabel },
-    { icon: '🎯', label: 'BEST DAY',     value: bestDayLabel },
-  ].forEach(({ icon, label, value }) => {
+    { label: 'TOTAL',        value: kpis.total },
+    { label: 'DONE',         value: kpis.completed },
+    { label: 'RATE',         value: `${kpis.rate}%` },
+    { label: 'PERFECT DAYS', value: kpis.perfectDays },
+    { label: 'STREAK',       value: `${kpis.maxStreak}d` },
+    { label: 'AVG / DAY',    value: kpis.avgPerDay },
+    { label: 'TOP CAT',      value: topCatLabel },
+    { label: 'BEST DAY',     value: bestDayLabel },
+  ].forEach(({ label, value }) => {
     const card = document.createElement('div');
     card.className = 'monthly-kpi-card';
-    card.innerHTML = `<span class="mkpi-icon">${icon}</span>
+    card.innerHTML = `<span class="mkpi-icon">${kpiIcons[label] || ''}</span>
                       <span class="mkpi-value">${value}</span>
                       <span class="mkpi-label">${label}</span>`;
     grid.appendChild(card);
