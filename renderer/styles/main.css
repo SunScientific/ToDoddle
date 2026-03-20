@@ -8,6 +8,7 @@
   --color-text:         #f0e6ff;
   --color-text-mid:     #c4b5fd;
   --color-muted:        #7c5a9e;
+  --gradient-header:    linear-gradient(135deg, #f9a8d4 0%, #c026d3 40%, #7c3aed 100%);
   --color-done-text:    #6b4d8a;
   --color-border:       #3b1a6e;
   --color-shadow:       rgba(192, 38, 211, 0.25);
@@ -77,7 +78,7 @@ body {
 
 /* ── Date header ── */
 .date-header {
-  background: linear-gradient(135deg, #5b21b6 0%, #c026d3 60%, #e040fb 100%);
+  background: var(--gradient-header);
   box-shadow: 0 4px 24px rgba(192, 38, 211, 0.35);
   padding: 16px 24px 12px;
   display: flex;
@@ -552,4 +553,148 @@ body {
   justify-content: space-between;
   padding-top: 4px;
   border-top: 1px solid var(--color-border);
+}
+
+
+/* ════════════════════════════════════════════════════════
+   THEMES
+   ════════════════════════════════════════════════════════ */
+
+/* ── Sukuna (Dark Crimson) ── */
+[data-theme="sukuna"] {
+  --color-bg:           #130404;
+  --color-card:         #1e0707;
+  --color-accent:       #dc2626;
+  --color-accent-light: #ef4444;
+  --color-accent-pale:  #4c0a0a;
+  --color-text:         #ffe4e1;
+  --color-text-mid:     #fca5a5;
+  --color-muted:        #9e5050;
+  --color-done-text:    #7a3a3a;
+  --color-border:       #6e1a1a;
+  --color-shadow:       rgba(220, 38, 38, 0.30);
+  --gradient-header:    linear-gradient(135deg, #fca5a5 0%, #dc2626 40%, #7f1d1d 100%);
+}
+
+/* ── Nanami (Amber Gold) ── */
+[data-theme="nanami"] {
+  --color-bg:           #0c0b07;
+  --color-card:         #18160b;
+  --color-accent:       #d97706;
+  --color-accent-light: #f59e0b;
+  --color-accent-pale:  #3a2a06;
+  --color-text:         #fef3c7;
+  --color-text-mid:     #fcd34d;
+  --color-muted:        #9e7a2e;
+  --color-done-text:    #7a5c20;
+  --color-border:       #6e4a0a;
+  --color-shadow:       rgba(217, 119, 6, 0.30);
+  --gradient-header:    linear-gradient(135deg, #fef3c7 0%, #d97706 40%, #92400e 100%);
+}
+
+/* ════════════════════════════════════════════════════════
+   SETTINGS POPOVER
+   ════════════════════════════════════════════════════════ */
+
+.btn-settings {
+  background: transparent;
+  border: none;
+  color: var(--color-muted);
+  font-size: 13px;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 6px;
+  transition: color 0.2s, background 0.2s;
+  line-height: 1;
+  -webkit-app-region: no-drag;
+}
+.btn-settings:hover { color: var(--color-text); background: rgba(255,255,255,0.08); }
+
+.settings-popover {
+  position: absolute;
+  top: 36px;
+  right: 8px;
+  z-index: 200;
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  padding: 14px 16px;
+  min-width: 210px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  display: none;
+  flex-direction: column;
+  gap: 14px;
+  animation: popover-in 0.18s ease;
+}
+.settings-popover.open { display: flex; }
+
+@keyframes popover-in {
+  from { opacity: 0; transform: translateY(-6px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0)    scale(1);    }
+}
+
+.settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.settings-label {
+  font-family: var(--font-system);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+.settings-toggle {
+  font-family: var(--font-system);
+  font-size: 10px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 20px;
+  border: 1px solid var(--color-border);
+  background: var(--color-accent-pale);
+  color: var(--color-text-mid);
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+  min-width: 58px;
+  text-align: center;
+}
+.settings-toggle.off {
+  background: transparent;
+  color: var(--color-muted);
+}
+.settings-toggle:hover { background: var(--color-accent); color: #fff; }
+
+.theme-btns {
+  display: flex;
+  gap: 6px;
+}
+.theme-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-system);
+  font-size: 10px;
+  font-weight: 600;
+  padding: 4px 9px;
+  border-radius: 20px;
+  border: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-muted);
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+.theme-btn.active,
+.theme-btn:hover {
+  background: var(--color-accent-pale);
+  color: var(--color-text);
+  border-color: var(--color-accent);
+}
+.theme-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
 }

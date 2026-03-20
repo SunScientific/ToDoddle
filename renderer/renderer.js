@@ -66,6 +66,48 @@ const carryoverNo     = document.getElementById('carryover-no');
 btnMinimize.addEventListener('click', () => api.minimize());
 btnClose.addEventListener('click',    () => api.close());
 
+// ── Settings popover ───────────────────────────────────────────────────────
+(function initSettings() {
+  const btn      = document.getElementById('btn-settings');
+  const popover  = document.getElementById('settings-popover');
+  const sfxBtn   = document.getElementById('sfx-toggle');
+  const themeBtns = document.querySelectorAll('.theme-btn');
+
+  // open / close
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    popover.classList.toggle('open');
+  });
+  document.addEventListener('click', (e) => {
+    if (!popover.contains(e.target) && e.target !== btn) {
+      popover.classList.remove('open');
+    }
+  });
+
+  // sound toggle
+  function refreshSfxBtn() {
+    const on = SoundFX.isOn();
+    sfxBtn.textContent = on ? '🔊 ON' : '🔇 OFF';
+    sfxBtn.classList.toggle('off', !on);
+  }
+  refreshSfxBtn();
+  sfxBtn.addEventListener('click', () => { SoundFX.toggle(); refreshSfxBtn(); });
+
+  // theme switching
+  const saved = localStorage.getItem('theme') || '';
+  document.body.dataset.theme = saved;
+  themeBtns.forEach(b => b.classList.toggle('active', b.dataset.theme === saved));
+
+  themeBtns.forEach(b => {
+    b.addEventListener('click', () => {
+      const t = b.dataset.theme;
+      document.body.dataset.theme = t;
+      localStorage.setItem('theme', t);
+      themeBtns.forEach(x => x.classList.toggle('active', x === b));
+    });
+  });
+})();
+
 // ── Tab navigation ─────────────────────────────────────────────────────────
 // #9: sliding tab indicator
 function updateTabIndicator(activeBtn) {
@@ -291,6 +333,7 @@ async function handlePrioritize(id, li, pinBtn) {
   tasks = await api.prioritizeTask(id);
   const task = tasks.find(t => t.id === id);
   const isPriority = task?.priority || false;
+  isPriority ? SoundFX.pin() : SoundFX.unpin();
   li.classList.toggle('priority', isPriority);
   pinBtn.classList.toggle('active', isPriority);
   pinBtn.title = isPriority ? 'Unpin task' : 'Pin to top';
@@ -402,6 +445,7 @@ async function handleToggle(id, li) {
   const task = tasks.find(t => t.id === id);
   if (!task) return;
   if (task.done) {
+    SoundFX.complete();
     li.classList.add('done', 'just-done');
     const cb = li.querySelector('.task-checkbox');
     cb.classList.add('checked');

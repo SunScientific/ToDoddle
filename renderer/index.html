@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="styles/typography.css" />
   <link rel="stylesheet" href="styles/components.css" />
   <link rel="stylesheet" href="styles/animations.css" />
+  <script src="sounds.js"></script>
 </head>
 <body>
 
@@ -15,8 +16,31 @@
   <div class="titlebar">
     <span class="titlebar-title">TODODDLE</span>
     <div class="titlebar-controls">
+      <button class="btn-settings" id="btn-settings" title="Settings">⚙</button>
       <button class="btn-minimize" id="btn-minimize" title="Minimize">&#x2013;</button>
       <button class="btn-close"    id="btn-close"    title="Close">&#x2715;</button>
+    </div>
+  </div>
+
+  <!-- Settings popover -->
+  <div class="settings-popover" id="settings-popover">
+    <div class="settings-row">
+      <span class="settings-label">Sound FX</span>
+      <button class="settings-toggle" id="sfx-toggle">🔊 ON</button>
+    </div>
+    <div class="settings-row">
+      <span class="settings-label">Theme</span>
+      <div class="theme-btns">
+        <button class="theme-btn active" data-theme="">
+          <span class="theme-dot" style="background:#c026d3"></span>Gojo
+        </button>
+        <button class="theme-btn" data-theme="sukuna">
+          <span class="theme-dot" style="background:#dc2626"></span>Sukuna
+        </button>
+        <button class="theme-btn" data-theme="nanami">
+          <span class="theme-dot" style="background:#d97706"></span>Nanami
+        </button>
+      </div>
     </div>
   </div>
 
