@@ -17,7 +17,14 @@
   --radius-task:   12px;
   --radius-btn:    10px;
 
-  --font-pixel: 'Press Start 2P', monospace;
+  --font-pixel:  'Press Start 2P', monospace;
+  --font-system: -apple-system, 'Segoe UI', system-ui, sans-serif;
+
+  /* ── Type scale (4 tiers only) ── */
+  --fs-heading: 9px;   /* section titles, modal headers, week header */
+  --fs-body:    8px;   /* task text, inputs, KPI values, stat values  */
+  --fs-label:   6px;   /* tags, category names, metadata, legends     */
+  --fs-micro:   5px;   /* KPI card labels, smallest hints             */
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -105,7 +112,9 @@ body {
   border-bottom: 3px solid transparent; /* keep for layout; replaced visually by indicator */
   cursor: pointer;
   font-family: var(--font-pixel);
-  font-size: 7px;
+  font-size: var(--fs-label);   /* 6px — compact nav chrome */
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
   color: var(--color-muted);
   transition: color 0.2s;
   margin-bottom: -2px;
@@ -135,9 +144,16 @@ body {
 }
 .view.hidden { display: none; }
 
+/* Today view: allow avatar to float above tab bar */
+#view-today {
+  overflow: visible;
+  position: relative;
+  z-index: 2; /* above tab-nav which is position:relative, z-index:auto */
+}
+
 /* ── Progress section ── */
 .progress-section {
-  padding: 110px 18px 10px;   /* extra top room for Gojo avatar */
+  padding: 88px 18px 10px;   /* extra top room for Gojo avatar */
   position: relative;
   display: flex;
   align-items: center;
@@ -182,6 +198,7 @@ body {
 .task-list-wrapper {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 8px 12px 12px;
   scrollbar-width: thin;
   scrollbar-color: var(--color-accent-pale) transparent;
@@ -258,10 +275,11 @@ body {
 }
 .cal-weekdays span {
   font-family: var(--font-pixel);
-  font-size: 6px;
+  font-size: var(--fs-label);   /* 6px */
   color: var(--color-muted);
   text-align: center;
   padding: 2px 0;
+  text-transform: uppercase;
 }
 
 .cal-grid {
@@ -423,16 +441,18 @@ body {
 .mkpi-icon svg { width: 16px; height: 16px; }
 .mkpi-value {
   font-family: var(--font-pixel);
-  font-size: 7px;
+  font-size: var(--fs-body);    /* 8px — primary data, bump up for readability */
   color: var(--color-text);
   font-weight: bold;
 }
 .mkpi-label {
-  font-family: var(--font-pixel);
-  font-size: 4.5px;
+  font-family: var(--font-system);  /* system font — less noisy than pixel for tiny labels */
+  font-size: var(--fs-micro);       /* 5px — was 4.5px */
   color: var(--color-muted);
-  letter-spacing: 0.5px;
+  letter-spacing: 0.8px;
   text-align: center;
+  text-transform: uppercase;
+  font-weight: 600;
 }
 
 /* ── Monthly weekly breakdown bars ── */
@@ -486,10 +506,11 @@ body {
 
 .week-header {
   font-family: var(--font-pixel);
-  font-size: 9px;
+  font-size: var(--fs-heading);  /* 9px */
   color: var(--color-text-mid);
   text-align: center;
   letter-spacing: 1px;
+  text-transform: uppercase;
 }
 
 .week-days-strip {
@@ -500,11 +521,23 @@ body {
 
 .summary-section-title {
   font-family: var(--font-pixel);
-  font-size: 7px;
+  font-size: var(--fs-label);   /* 6px — was 7px, tightened to label tier */
   color: var(--color-muted);
   letter-spacing: 2px;
+  text-transform: uppercase;
   padding: 4px 0 2px;
   border-top: 1px solid var(--color-border);
+}
+/* Sub-section titles (WEEKLY BREAKDOWN, MONTHLY BY CATEGORY) */
+.summary-section-title-sm {
+  font-family: var(--font-pixel);
+  font-size: var(--fs-micro);   /* 5px — visually subordinate */
+  color: var(--color-muted);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  padding: 4px 0 2px;
+  border-top: 1px solid var(--color-border);
+  opacity: 0.75;
 }
 
 .category-bars {

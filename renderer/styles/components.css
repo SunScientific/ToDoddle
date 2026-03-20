@@ -47,7 +47,7 @@
   background: transparent;
   color: var(--cat-color, #6abf85);
   font-family: var(--font-pixel);
-  font-size: 7px;
+  font-size: var(--fs-label);   /* 6px */
   cursor: pointer;
   transition: color 0.22s, box-shadow 0.22s;
   white-space: nowrap;
@@ -437,14 +437,16 @@
 }
 .cat-modal-title {
   font-family: var(--font-pixel);
-  font-size: 9px;
+  font-size: var(--fs-heading);  /* 9px */
   letter-spacing: 1px;
+  text-transform: uppercase;
 }
 .cat-modal-sub {
-  font-family: var(--font-pixel);
-  font-size: 6px;
+  font-family: var(--font-system); /* system font for sub-text */
+  font-size: var(--fs-label);      /* 6px */
   color: var(--color-muted);
   margin-top: 5px;
+  letter-spacing: 0.3px;
 }
 .cat-modal-close {
   background: transparent;
@@ -487,11 +489,12 @@
   text-align: center;
 }
 .cat-modal-date {
-  font-family: var(--font-pixel);
-  font-size: 5.5px;
+  font-family: var(--font-system); /* system font for metadata */
+  font-size: var(--fs-micro);      /* 5px — was 5.5px */
   color: var(--color-muted);
   flex-shrink: 0;
   width: 40px;
+  letter-spacing: 0.3px;
 }
 .cat-modal-text {
   flex: 1;
@@ -521,13 +524,15 @@
 }
 .stat-value {
   font-family: var(--font-pixel);
-  font-size: 12px;
+  font-size: 12px;               /* featured number — intentionally large */
   color: var(--color-accent);
   line-height: 1;
 }
 .stat-label {
-  font-family: var(--font-pixel);
-  font-size: 6px;
+  font-family: var(--font-system); /* system font — matches mkpi-label approach */
+  font-size: var(--fs-micro);      /* 5px */
   color: var(--color-muted);
-  letter-spacing: 0.5px;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  font-weight: 600;
 }

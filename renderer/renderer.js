@@ -6,7 +6,7 @@ const CATEGORIES = [
   { id: 'sales',     label: 'Sales Ops',     color: '#a78bfa' },
   { id: 'legal',     label: 'Legal',         color: '#38bdf8' },
   { id: 'marketing', label: 'Marketing',     color: '#fb923c' },
-  { id: 'reprel',    label: 'Rep Relations', color: '#34d399' },
+  { id: 'reprel',    label: 'Travel Ops', color: '#34d399' },
   { id: 'hr',        label: 'HR',            color: '#fbbf24' },
 ];
 
@@ -154,15 +154,58 @@ function updateProgress() {
 
   // State
   const prevState = rider.dataset.state;
-  if      (total === 0)        rider.dataset.state = 'none';
-  else if (done === total)     rider.dataset.state = 'done';
-  else if (pct >= 50)          rider.dataset.state = 'ok';
-  else                         rider.dataset.state = 'sad';
+  if      (total === 0)    rider.dataset.state = 'none';
+  else if (done === total) rider.dataset.state = 'done';
+  else if (pct > 20)       rider.dataset.state = 'middle';
+  else                     rider.dataset.state = 'sad';
 
-  // Swap image based on state
+  // Swap image with smooth crossfade
+  const STATE_IMG = { done: 'gojohappy.png', middle: 'gojomiddle.png' };
+  const newSrc = STATE_IMG[rider.dataset.state] || 'gojosad.png';
   const gojoImg = document.getElementById('gojo-img');
   if (gojoImg) {
-    gojoImg.src = rider.dataset.state === 'done' ? 'gojohappy.png' : 'gojosad.png';
+    if (!gojoImg.src.endsWith(newSrc)) {
+      // Fade out → swap src → fade in
+      gojoImg.style.opacity = '0';
+      setTimeout(() => {
+        gojoImg.src = newSrc;
+        gojoImg.style.opacity = '1';
+      }, 220);
+    } else if (!gojoImg.src || gojoImg.src === '') {
+      gojoImg.src = newSrc; // first load — no fade
+    }
+  }
+
+  // Inject / remove flying star particles
+  const isDone = rider.dataset.state === 'done';
+  const wasDone = prevState === 'done';
+  if (isDone && !wasDone) {
+    // Add 8 stars flying in different directions
+    const STARS = [
+      { emoji: '✦', anim: 'star-up',    delay: 0,    dur: 1.1 },
+      { emoji: '★', anim: 'star-upL',   delay: 0.1,  dur: 1.0 },
+      { emoji: '✶', anim: 'star-upR',   delay: 0.2,  dur: 1.2 },
+      { emoji: '✦', anim: 'star-left',  delay: 0.3,  dur: 0.95 },
+      { emoji: '✧', anim: 'star-right', delay: 0.15, dur: 1.05 },
+      { emoji: '★', anim: 'star-upLL',  delay: 0.25, dur: 1.15 },
+      { emoji: '✶', anim: 'star-upRR',  delay: 0.05, dur: 1.0 },
+      { emoji: '✦', anim: 'star-upFar', delay: 0.35, dur: 1.3 },
+    ];
+    STARS.forEach(({ emoji, anim, delay, dur }) => {
+      const el = document.createElement('span');
+      el.className = 'star-particle';
+      el.textContent = emoji;
+      el.style.animationName      = anim;
+      el.style.animationDuration  = `${dur}s`;
+      el.style.animationDelay     = `${delay}s`;
+      el.style.animationTimingFunction = 'ease-out';
+      el.style.animationIterationCount = 'infinite';
+      el.style.fontSize = `${11 + Math.floor(Math.random() * 5)}px`;
+      rider.appendChild(el);
+    });
+  } else if (!isDone && wasDone) {
+    // Clean up stars when leaving done state
+    rider.querySelectorAll('.star-particle').forEach(el => el.remove());
   }
 
   rider.style.opacity = total === 0 ? '0' : '1';

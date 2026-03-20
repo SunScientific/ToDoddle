@@ -5,9 +5,10 @@
   font-style: normal;
 }
 
+/* ── Date display ── */
 .date-day {
   font-family: var(--font-pixel);
-  font-size: 48px;
+  font-size: 48px;          /* intentionally large — hero number */
   color: #ffffff;
   line-height: 1;
   letter-spacing: -2px;
@@ -16,56 +17,66 @@
 
 .date-weekday-month {
   font-family: var(--font-pixel);
-  font-size: 8px;
+  font-size: var(--fs-body);   /* 8px */
   color: rgba(255, 255, 255, 0.9);
   letter-spacing: 1px;
+  text-transform: uppercase;
 }
 
 .clock {
   font-family: var(--font-pixel);
-  font-size: 8px;
+  font-size: var(--fs-body);   /* 8px */
   color: rgba(255, 255, 255, 0.8);
   letter-spacing: 1px;
 }
 
+/* ── Titlebar ── */
 .titlebar-title {
   font-family: var(--font-pixel);
-  font-size: 7px;
+  font-size: var(--fs-label);  /* 6px — compact UI chrome */
   color: var(--color-text-mid);
-  letter-spacing: 2px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
   opacity: 0.7;
 }
 
+/* ── Progress bar label ── */
 .progress-label {
   font-family: var(--font-pixel);
-  font-size: 7px;
+  font-size: var(--fs-label);  /* 6px — metadata, not primary */
   color: var(--color-text-mid);
   white-space: nowrap;
   min-width: 72px;
   text-align: right;
 }
 
+/* ── Task text ── */
 .task-text {
   font-family: var(--font-pixel);
-  font-size: 8px;
+  font-size: var(--fs-body);   /* 8px */
   color: var(--color-text);
   line-height: 1.6;
   word-break: break-word;
 }
-
 .task-item.done .task-text { color: var(--color-done-text); }
 
+/* ── Task input ── */
+.task-input {
+  font-family: var(--font-pixel);
+  font-size: var(--fs-body);   /* 8px */
+  color: var(--color-text);
+}
 .task-input::placeholder {
   font-family: var(--font-pixel);
-  font-size: 7px;
+  font-size: var(--fs-label);  /* 6px — hint text, subordinate */
   color: var(--color-muted);
   opacity: 0.8;
 }
-.task-input { font-family: var(--font-pixel); font-size: 8px; color: var(--color-text); }
 
+/* ── Empty state ── */
 .empty-state p {
   font-family: var(--font-pixel);
-  font-size: 7px;
+  font-size: var(--fs-label);  /* 6px — hint text */
   color: var(--color-muted);
   text-align: center;
 }
