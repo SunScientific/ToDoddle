@@ -62,6 +62,18 @@ const carryoverMsg    = document.getElementById('carryover-msg');
 const carryoverYes    = document.getElementById('carryover-yes');
 const carryoverNo     = document.getElementById('carryover-no');
 
+// ── Feature DOM refs ────────────────────────────────────────────────────────
+const btnTime        = document.getElementById('btn-time');
+const timePickerRow  = document.getElementById('time-picker-row');
+const taskTimeInput  = document.getElementById('task-time-input');
+const timeClearBtn   = document.getElementById('time-clear-btn');
+const milestoneList  = document.getElementById('milestone-list');
+const milestoneEmpty = document.getElementById('milestone-empty');
+const msModalBackdrop= document.getElementById('milestone-modal-backdrop');
+const msTitleInput   = document.getElementById('ms-title-input');
+const msDateInput    = document.getElementById('ms-date-input');
+const msCatSelect    = document.getElementById('ms-cat-select');
+
 // ── Window controls ────────────────────────────────────────────────────────
 btnMinimize.addEventListener('click', () => api.minimize());
 btnClose.addEventListener('click',    () => api.close());
@@ -130,8 +142,9 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
     document.getElementById(`view-${tab}`).classList.remove('hidden');
 
-    if (tab === 'history') initHistoryView();
-    if (tab === 'summary') initSummaryView();
+    if (tab === 'history')    initHistoryView();
+    if (tab === 'summary')    initSummaryView();
+    if (tab === 'milestones') renderMilestones();
   });
 });
 // init indicator on first load (disable transition so it snaps into place)
@@ -154,7 +167,14 @@ function updateClock() {
   clockEl.textContent = `${String(h).padStart(2, '0')}:${m} ${ampm}`;
 }
 updateClock();
-setInterval(updateClock, 1000);
+setInterval(() => {
+  updateClock();
+  // Refresh overdue badges every minute
+  document.querySelectorAll('.task-time-badge').forEach(badge => {
+    const task = tasks.find(t => t.dueTime && badge.dataset.due === t.dueTime);
+    if (task) badge.classList.toggle('overdue', isOverdue(task));
+  });
+}, 60000);
 
 // ── Date display ───────────────────────────────────────────────────────────
 async function loadDate() {
@@ -380,19 +400,65 @@ function createTaskEl(task, isNew = false) {
   const body = document.createElement('div');
   body.className = 'task-body';
 
+  // top row: text + time badge + notes dot
+  const topRow = document.createElement('div');
+  topRow.style.cssText = 'display:flex;align-items:center;gap:4px;width:100%';
+
   const txt = document.createElement('span');
   txt.className   = 'task-text';
   txt.textContent = task.text;
   txt.title       = 'Double-click to edit';
   txt.addEventListener('dblclick', () => startEdit(task, txt));
 
+  topRow.appendChild(txt);
+
+  // Feature 1: time badge
+  if (task.dueTime) {
+    const badge = document.createElement('span');
+    badge.className = 'task-time-badge';
+    badge.textContent = formatTime12(task.dueTime);
+    badge.dataset.due = task.dueTime;
+    if (isOverdue(task)) badge.classList.add('overdue');
+    topRow.appendChild(badge);
+  }
+
+  // Feature 3: notes indicator dot
+  const notesDot = document.createElement('span');
+  notesDot.className = 'task-notes-indicator' + (task.notes ? ' has-notes' : '');
+  notesDot.title = 'Has note';
+  topRow.appendChild(notesDot);
+
   const catTag = document.createElement('span');
   catTag.className = 'task-cat-tag';
   catTag.textContent = cat.label;
   catTag.style.setProperty('--cat-color', cat.color);
 
-  body.appendChild(txt);
+  body.appendChild(topRow);
   body.appendChild(catTag);
+
+  // Feature 3: notes expandable area
+  const notesArea = document.createElement('div');
+  notesArea.className = 'task-notes-area' + (task.notes ? ' expanded' : '');
+  const notesInput = document.createElement('input');
+  notesInput.type = 'text';
+  notesInput.className = 'task-notes-input';
+  notesInput.placeholder = 'add a note...';
+  notesInput.value = task.notes || '';
+  notesInput.addEventListener('blur', async () => {
+    const val = notesInput.value.trim();
+    await api.updateNotes(task.id, val);
+    tasks = await api.getTasks();
+    notesDot.classList.toggle('has-notes', !!val);
+  });
+  notesInput.addEventListener('click', e => e.stopPropagation());
+  notesArea.appendChild(notesInput);
+  body.appendChild(notesArea);
+
+  // Toggle notes on task body click
+  body.addEventListener('click', () => {
+    notesArea.classList.toggle('expanded');
+    if (notesArea.classList.contains('expanded')) notesInput.focus();
+  });
 
   const pin = document.createElement('button');
   pin.className = 'btn-pin' + (task.priority ? ' active' : '');
@@ -415,6 +481,22 @@ function createTaskEl(task, isNew = false) {
   return li;
 }
 
+// ── Helper: format "HH:MM" → "3:30 PM" ─────────────────────────────────────
+function formatTime12(t) {
+  const [h, m] = t.split(':').map(Number);
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  const hr = h % 12 || 12;
+  return `${hr}:${String(m).padStart(2,'0')} ${ampm}`;
+}
+
+// ── Helper: is task overdue? ────────────────────────────────────────────────
+function isOverdue(task) {
+  if (!task.dueTime || task.done) return false;
+  const now = new Date();
+  const [h, m] = task.dueTime.split(':').map(Number);
+  return now.getHours() > h || (now.getHours() === h && now.getMinutes() >= m);
+}
+
 function renderTaskList() {
   taskList.innerHTML = '';
   const sorted = [
@@ -427,11 +509,27 @@ function renderTaskList() {
 }
 
 // ── TODAY: Actions ─────────────────────────────────────────────────────────
+// ── Feature 1: Due Time toggle ──────────────────────────────────────────────
+btnTime.addEventListener('click', () => {
+  const hidden = timePickerRow.classList.toggle('hidden');
+  btnTime.classList.toggle('active', !hidden);
+  if (!hidden) taskTimeInput.focus();
+});
+timeClearBtn.addEventListener('click', () => {
+  taskTimeInput.value = '';
+  timePickerRow.classList.add('hidden');
+  btnTime.classList.remove('active');
+});
+
 async function handleAdd() {
   const text = taskInput.value.trim();
   if (!text) return;
+  const dueTime = taskTimeInput.value || '';
   taskInput.value = '';
-  const task = await api.addTask(text, selectedCategory);
+  taskTimeInput.value = '';
+  timePickerRow.classList.add('hidden');
+  btnTime.classList.remove('active');
+  const task = await api.addTask(text, selectedCategory, dueTime);
   if (!task) return;
   tasks.push(task);
   const li = createTaskEl(task, true);
@@ -901,6 +999,67 @@ function renderMonthlyKPIs(monthData, now) {
     wbEl.appendChild(row);
   });
 
+  // Feature 4: Sparkline trend line
+  const sparkWrap = document.getElementById('sparkline-wrap');
+  sparkWrap.innerHTML = '';
+  if (monthData.days && monthData.days.length > 1) {
+    const pts = monthData.days.map(d => {
+      const tot = d.tasks.length;
+      return tot === 0 ? null : Math.round((d.tasks.filter(t => t.done).length / tot) * 100);
+    });
+    const valid = pts.filter(p => p !== null);
+    if (valid.length > 0) {
+      const W = 280, H = 48, pad = 6;
+      const xStep = (W - pad * 2) / Math.max(pts.length - 1, 1);
+      const coords = pts.map((p, i) => {
+        const x = pad + i * xStep;
+        const y = p === null ? null : pad + (H - pad * 2) * (1 - p / 100);
+        return { x, y, v: p };
+      });
+      const linePoints = coords.filter(c => c.y !== null).map(c => `${c.x},${c.y}`).join(' ');
+      const areaPoints = coords.filter(c => c.y !== null).map(c => `${c.x},${c.y}`).join(' ');
+      const firstValid = coords.find(c => c.y !== null);
+      const lastValid  = [...coords].reverse().find(c => c.y !== null);
+      const areaPath   = `${firstValid.x},${H - pad} ${areaPoints} ${lastValid.x},${H - pad}`;
+      const maxVal = Math.max(...valid);
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+      svg.classList.add('sparkline');
+      svg.innerHTML = `
+        <defs>
+          <linearGradient id="sparkGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%"   stop-color="var(--color-accent)" stop-opacity="0.35"/>
+            <stop offset="100%" stop-color="var(--color-accent)" stop-opacity="0"/>
+          </linearGradient>
+        </defs>
+        <line x1="${pad}" y1="${H-pad}" x2="${W-pad}" y2="${H-pad}" stroke="var(--color-border)" stroke-width="0.8" stroke-dasharray="3 3"/>
+        <polygon points="${areaPath}" fill="url(#sparkGrad)"/>
+        <polyline points="${linePoints}" fill="none" stroke="var(--color-accent)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        ${coords.filter(c => c.y !== null && c.v === maxVal).map(c =>
+          `<circle cx="${c.x}" cy="${c.y}" r="3.5" fill="#f0abfc"/>`
+        ).join('')}
+      `;
+      sparkWrap.appendChild(svg);
+    } else {
+      sparkWrap.innerHTML = '<div class="sparkline-empty">No data yet this month</div>';
+    }
+  } else {
+    sparkWrap.innerHTML = '<div class="sparkline-empty">No data yet this month</div>';
+  }
+
+  // Feature 6: PDF export button
+  const pdfBtn = document.getElementById('btn-export-pdf');
+  if (pdfBtn) {
+    pdfBtn.onclick = async () => {
+      pdfBtn.disabled = true;
+      pdfBtn.textContent = '...';
+      const result = await api.exportPdf();
+      pdfBtn.disabled = false;
+      pdfBtn.textContent = result.success ? '✓ Saved' : '↓ PDF';
+      if (result.success) setTimeout(() => { pdfBtn.textContent = '↓ PDF'; }, 2500);
+    };
+  }
+
   // Monthly category bars (clickable → drilldown modal)
   const mcEl = document.getElementById('monthly-cat-bars');
   mcEl.innerHTML = '';
@@ -1071,6 +1230,178 @@ api.onDayReset(() => {
   dateDayEl.classList.add('resetting');
   setTimeout(() => dateDayEl.classList.remove('resetting'), 1300);
   checkCarryOver();
+});
+
+// ════════════════════════════════════════════════════════
+// FEATURE 7 — MILESTONES
+// ════════════════════════════════════════════════════════
+
+async function renderMilestones() {
+  const milestones = await api.getMilestones();
+  milestoneList.innerHTML = '';
+
+  if (!milestones.length) {
+    milestoneEmpty.classList.remove('hidden');
+    return;
+  }
+  milestoneEmpty.classList.add('hidden');
+
+  // Sort: incomplete first, then by target date
+  const sorted = [...milestones].sort((a, b) => {
+    if (a.done !== b.done) return a.done ? 1 : -1;
+    return (a.targetDate || '').localeCompare(b.targetDate || '');
+  });
+
+  sorted.forEach(m => milestoneList.appendChild(createMilestoneCard(m)));
+}
+
+function createMilestoneCard(m) {
+  const card = document.createElement('div');
+  card.className = 'milestone-card' + (m.done ? ' done' : '');
+  card.dataset.id = m.id;
+
+  // Header row
+  const header = document.createElement('div');
+  header.className = 'milestone-card-header';
+
+  const title = document.createElement('span');
+  title.className = 'milestone-title';
+  title.textContent = m.title;
+
+  const delBtn = document.createElement('button');
+  delBtn.className = 'milestone-del-btn';
+  delBtn.textContent = '×';
+  delBtn.title = 'Delete milestone';
+  delBtn.addEventListener('click', async () => {
+    card.style.opacity = '0';
+    card.style.transform = 'scale(0.95)';
+    card.style.transition = 'all 0.2s';
+    await new Promise(r => setTimeout(r, 200));
+    await api.deleteMilestone(m.id);
+    renderMilestones();
+  });
+
+  header.appendChild(title);
+  header.appendChild(delBtn);
+
+  // Meta row: date + category
+  const meta = document.createElement('div');
+  meta.className = 'milestone-meta';
+
+  if (m.targetDate) {
+    const isOver = !m.done && m.targetDate < new Date().toISOString().slice(0,10);
+    const dateBadge = document.createElement('span');
+    dateBadge.className = 'milestone-date-badge' + (isOver ? ' overdue' : '');
+    const d = new Date(m.targetDate + 'T12:00:00');
+    dateBadge.textContent = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    meta.appendChild(dateBadge);
+  }
+
+  if (m.category) {
+    const cat = getCat(m.category);
+    const catBadge = document.createElement('span');
+    catBadge.className = 'milestone-cat-badge';
+    catBadge.textContent = cat.label;
+    catBadge.style.color = cat.color;
+    catBadge.style.background = `${cat.color}22`;
+    meta.appendChild(catBadge);
+  }
+
+  if (m.done) {
+    const doneBadge = document.createElement('span');
+    doneBadge.className = 'milestone-done-badge';
+    doneBadge.textContent = '✓ Complete';
+    meta.appendChild(doneBadge);
+  }
+
+  // Progress bar
+  const progressRow = document.createElement('div');
+  progressRow.className = 'milestone-progress-row';
+
+  const track = document.createElement('div');
+  track.className = 'milestone-progress-track';
+  const fill = document.createElement('div');
+  fill.className = 'milestone-progress-fill';
+  fill.style.width = `${m.progress}%`;
+  track.appendChild(fill);
+
+  const pct = document.createElement('span');
+  pct.className = 'milestone-progress-pct';
+  pct.textContent = `${m.progress}%`;
+
+  progressRow.appendChild(track);
+  progressRow.appendChild(pct);
+
+  // Slider (hidden when done)
+  const slider = document.createElement('input');
+  slider.type = 'range';
+  slider.className = 'milestone-progress-slider';
+  slider.min = 0; slider.max = 100; slider.value = m.progress;
+  slider.style.display = m.done ? 'none' : 'block';
+
+  let sliderTimer;
+  slider.addEventListener('input', () => {
+    const val = Number(slider.value);
+    fill.style.width  = `${val}%`;
+    pct.textContent   = `${val}%`;
+  });
+  slider.addEventListener('change', async () => {
+    clearTimeout(sliderTimer);
+    sliderTimer = setTimeout(async () => {
+      const val = Number(slider.value);
+      const updated = await api.updateMilestoneProgress(m.id, val);
+      if (val >= 100) {
+        // Celebrate!
+        card.classList.add('done');
+        slider.style.display = 'none';
+        const doneBadge = document.createElement('span');
+        doneBadge.className = 'milestone-done-badge';
+        doneBadge.textContent = '✓ Complete';
+        meta.appendChild(doneBadge);
+        // Trigger Gojo happy if on today tab
+        const rider = document.getElementById('avatar-rider');
+        if (rider) {
+          rider.dataset.state = 'done';
+          document.getElementById('gojo-img').src = 'gojohappy.png';
+          setTimeout(() => renderMilestones(), 1500);
+        } else {
+          setTimeout(() => renderMilestones(), 600);
+        }
+      }
+    }, 400);
+  });
+
+  card.appendChild(header);
+  card.appendChild(meta);
+  card.appendChild(progressRow);
+  card.appendChild(slider);
+  return card;
+}
+
+// Milestone modal
+document.getElementById('btn-add-milestone').addEventListener('click', () => {
+  msTitleInput.value = '';
+  msDateInput.value  = new Date().toISOString().slice(0,10);
+  msCatSelect.value  = '';
+  msModalBackdrop.classList.remove('hidden');
+  msTitleInput.focus();
+});
+
+document.getElementById('ms-cancel').addEventListener('click', () => {
+  msModalBackdrop.classList.add('hidden');
+});
+
+document.getElementById('ms-save').addEventListener('click', async () => {
+  const title = msTitleInput.value.trim();
+  if (!title) { msTitleInput.focus(); return; }
+  await api.addMilestone(title, msDateInput.value, msCatSelect.value || null);
+  msModalBackdrop.classList.add('hidden');
+  renderMilestones();
+});
+
+msTitleInput.addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('ms-save').click();
+  if (e.key === 'Escape') msModalBackdrop.classList.add('hidden');
 });
 
 // ── Init ───────────────────────────────────────────────────────────────────

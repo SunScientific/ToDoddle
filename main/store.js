@@ -16,9 +16,16 @@ const schema = {
         done:      { type: 'boolean' },
         priority:  { type: 'boolean' },
         category:  { type: 'string' },
+        dueTime:   { type: 'string' },   /* "HH:MM" or '' */
+        notes:     { type: 'string' },   /* short note line */
         createdAt: { type: 'string' }
       }
     }
+  },
+  milestones: {
+    type: 'array',
+    default: [],
+    items: { type: 'object' }
   }
 };
 
@@ -32,18 +39,26 @@ function getTasks() {
   return store.get('tasks');
 }
 
-function addTask(text, category) {
+function addTask(text, category, dueTime) {
   const tasks = getTasks();
   const task = {
-    id: String(Date.now()),
-    text: text.trim(),
-    done: false,
-    category: category || 'other',
+    id:        String(Date.now()),
+    text:      text.trim(),
+    done:      false,
+    category:  category || 'other',
+    dueTime:   dueTime  || '',
+    notes:     '',
     createdAt: new Date().toISOString()
   };
   tasks.push(task);
   store.set('tasks', tasks);
   return task;
+}
+
+function updateNotes(id, notes) {
+  const tasks = getTasks().map(t => t.id === id ? { ...t, notes: (notes || '').trim() } : t);
+  store.set('tasks', tasks);
+  return tasks;
 }
 
 function toggleTask(id) {
@@ -268,6 +283,43 @@ function listArchiveSummaries() {
   });
 }
 
+// ── Milestones ─────────────────────────────────────────────────────────────
+function getMilestones() {
+  return store.get('milestones') || [];
+}
+
+function addMilestone(title, targetDate, category) {
+  const ms = getMilestones();
+  const m = {
+    id:         String(Date.now()),
+    title:      (title || '').trim(),
+    targetDate: targetDate || '',
+    category:   category   || null,
+    notes:      '',
+    progress:   0,
+    done:       false,
+    createdAt:  new Date().toISOString()
+  };
+  ms.push(m);
+  store.set('milestones', ms);
+  return ms;
+}
+
+function updateMilestoneProgress(id, progress) {
+  const val = Math.min(100, Math.max(0, Number(progress) || 0));
+  const ms = getMilestones().map(m =>
+    m.id === id ? { ...m, progress: val, done: val >= 100 } : m
+  );
+  store.set('milestones', ms);
+  return ms;
+}
+
+function deleteMilestone(id) {
+  const ms = getMilestones().filter(m => m.id !== id);
+  store.set('milestones', ms);
+  return ms;
+}
+
 module.exports = {
   store,
   today,
@@ -279,6 +331,7 @@ module.exports = {
   prioritizeTask,
   reorderTasks,
   updateTask,
+  updateNotes,
   getYesterdayUnfinished,
   listArchiveSummaries,
   resetForNewDay,
@@ -287,5 +340,9 @@ module.exports = {
   getArchive,
   listArchiveDates,
   getWeekData,
-  getMonthData
+  getMonthData,
+  getMilestones,
+  addMilestone,
+  updateMilestoneProgress,
+  deleteMilestone
 };

@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="styles/typography.css" />
   <link rel="stylesheet" href="styles/components.css" />
   <link rel="stylesheet" href="styles/animations.css" />
+  <link rel="stylesheet" href="styles/features.css" />
   <script src="sounds.js"></script>
 </head>
 <body>
@@ -63,6 +64,7 @@
       <button class="tab-btn active" data-tab="today">TODAY</button>
       <button class="tab-btn"        data-tab="history">HISTORY</button>
       <button class="tab-btn"        data-tab="summary">WEEKLY</button>
+      <button class="tab-btn"        data-tab="milestones">GOALS</button>
       <div class="tab-indicator" id="tab-indicator"></div>
     </nav>
 
@@ -94,7 +96,14 @@
             autocomplete="off"
             spellcheck="false"
           />
-          <button class="btn-add" id="btn-add">+</button>
+          <button class="btn-time" id="btn-time" title="Set due time">🕐</button>
+          <button class="btn-add"  id="btn-add">+</button>
+        </div>
+        <!-- Time picker row (hidden until clock icon clicked) -->
+        <div class="time-picker-row hidden" id="time-picker-row">
+          <label class="time-picker-label">Due time</label>
+          <input type="time" id="task-time-input" class="task-time-input" />
+          <button class="time-clear-btn" id="time-clear-btn">✕</button>
         </div>
         <div class="category-row" id="category-row">
           <!-- Category pills rendered by JS -->
@@ -183,10 +192,15 @@
         <!-- ── Monthly Report ── -->
         <div class="summary-section-title monthly-title">
           <span id="monthly-title-label">MONTHLY REPORT</span>
+          <button class="btn-export-pdf" id="btn-export-pdf" title="Export PDF">↓ PDF</button>
         </div>
 
         <!-- Monthly KPI grid -->
         <div class="monthly-kpi-grid" id="monthly-kpi-grid"></div>
+
+        <!-- Trend line sparkline -->
+        <div class="summary-section-title-sm">Daily Completion Trend</div>
+        <div class="sparkline-wrap" id="sparkline-wrap"></div>
 
         <!-- Weekly breakdown bars for the month -->
         <div class="summary-section-title-sm">Weekly Breakdown</div>
@@ -196,6 +210,49 @@
         <div class="summary-section-title-sm">Monthly by Category</div>
         <div class="category-bars" id="monthly-cat-bars"></div>
 
+      </div>
+    </div>
+
+    <!-- ── MILESTONES VIEW ── -->
+    <div class="view hidden" id="view-milestones">
+      <div class="milestone-scroll">
+
+        <div class="milestone-header-row">
+          <span class="milestone-header-title">Big Goals</span>
+          <button class="btn-add-milestone" id="btn-add-milestone">+ New Goal</button>
+        </div>
+
+        <div class="milestone-list" id="milestone-list">
+          <!-- Rendered by JS -->
+        </div>
+
+        <div class="milestone-empty hidden" id="milestone-empty">
+          <p>no goals yet</p>
+          <p>add your first milestone above ↑</p>
+        </div>
+
+      </div>
+
+      <!-- Add Milestone modal -->
+      <div class="milestone-modal-backdrop hidden" id="milestone-modal-backdrop">
+        <div class="milestone-modal">
+          <div class="milestone-modal-title">New Goal</div>
+          <input  type="text"  id="ms-title-input"    class="ms-input" placeholder="goal title..." maxlength="60" />
+          <input  type="date"  id="ms-date-input"     class="ms-input" />
+          <select              id="ms-cat-select"     class="ms-input ms-select">
+            <option value="">No category</option>
+            <option value="finance">Finance</option>
+            <option value="sales">Sales Ops</option>
+            <option value="legal">Legal</option>
+            <option value="marketing">Marketing</option>
+            <option value="reprel">Travel Ops</option>
+            <option value="hr">HR</option>
+          </select>
+          <div class="milestone-modal-btns">
+            <button class="ms-btn-cancel" id="ms-cancel">Cancel</button>
+            <button class="ms-btn-save"   id="ms-save">Save Goal</button>
+          </div>
+        </div>
       </div>
     </div>
 

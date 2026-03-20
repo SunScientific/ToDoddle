@@ -2,9 +2,10 @@ const { app, BrowserWindow, ipcMain, Tray, Menu, nativeImage } = require('electr
 const path = require('path');
 const {
   getTasks, addTask, toggleTask, deleteTask, deleteArchivedTask, prioritizeTask,
-  reorderTasks, updateTask, getYesterdayUnfinished, listArchiveSummaries,
+  reorderTasks, updateTask, updateNotes, getYesterdayUnfinished, listArchiveSummaries,
   today, getCurrentDate, setCurrentDate,
-  getArchive, listArchiveDates, getWeekData, getMonthData
+  getArchive, listArchiveDates, getWeekData, getMonthData,
+  getMilestones, addMilestone, updateMilestoneProgress, deleteMilestone
 } = require('./store');
 const { startMidnightWatch, stopMidnightWatch } = require('./scheduler');
 
@@ -121,9 +122,9 @@ app.on('activate', () => {
 // ── IPC Handlers ──────────────────────────────────────────────────────────
 ipcMain.handle('get-tasks', () => getTasks());
 
-ipcMain.handle('add-task', (_, text, category) => {
+ipcMain.handle('add-task', (_, text, category, dueTime) => {
   if (!text || !text.trim()) return null;
-  return addTask(text, category);
+  return addTask(text, category, dueTime);
 });
 
 ipcMain.handle('toggle-task',     (_, id) => toggleTask(id));
@@ -151,6 +152,35 @@ ipcMain.handle('reorder-tasks',            (_, ids)       => reorderTasks(ids));
 ipcMain.handle('update-task',              (_, id, text)  => updateTask(id, text));
 ipcMain.handle('get-yesterday-unfinished', ()             => getYesterdayUnfinished());
 ipcMain.handle('list-archive-summaries',   ()             => listArchiveSummaries());
+
+ipcMain.handle('update-notes',               (_, id, notes)            => updateNotes(id, notes));
+ipcMain.handle('get-milestones',             ()                         => getMilestones());
+ipcMain.handle('add-milestone',              (_, title, date, cat)      => addMilestone(title, date, cat));
+ipcMain.handle('update-milestone-progress',  (_, id, progress)          => updateMilestoneProgress(id, progress));
+ipcMain.handle('delete-milestone',           (_, id)                    => deleteMilestone(id));
+
+ipcMain.handle('export-pdf', async () => {
+  const { dialog } = require('electron');
+  const fs = require('fs');
+  const d  = new Date();
+  const label = d.toLocaleString('en-US', { month: 'long', year: 'numeric' });
+  const result = await dialog.showSaveDialog(mainWindow, {
+    defaultPath: `ToDoddle-${label.replace(' ', '-')}.pdf`,
+    filters: [{ name: 'PDF Files', extensions: ['pdf'] }]
+  });
+  if (result.canceled || !result.filePath) return { success: false };
+  try {
+    const pdfData = await mainWindow.webContents.printToPDF({
+      printBackground: true,
+      pageSize: 'A4',
+      marginsType: 1
+    });
+    fs.writeFileSync(result.filePath, pdfData);
+    return { success: true, path: result.filePath };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+});
 
 // Window controls
 ipcMain.on('window-minimize', () => mainWindow && mainWindow.minimize());
