@@ -94,6 +94,382 @@
 }
 
 /* ════════════════════════════════════════════════════════
+   CUSTOM TIME PICKER
+   ════════════════════════════════════════════════════════ */
+
+.ctp-wrapper {
+  padding: 6px 2px 2px;
+  animation: slide-down 0.18s ease;
+}
+.ctp-wrapper.hidden { display: none; }
+
+.ctp-panel {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  padding: 6px 8px;
+}
+
+/* Scroll columns */
+.ctp-col {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 120px;
+  overflow-y: auto;
+  scrollbar-width: none;
+  border-radius: 8px;
+  padding: 2px;
+  min-width: 34px;
+}
+.ctp-col::-webkit-scrollbar { display: none; }
+
+.ctp-item {
+  font-family: var(--font-pixel);
+  font-size: var(--fs-label);
+  color: var(--color-muted);
+  padding: 5px 4px;
+  border-radius: 6px;
+  text-align: center;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  user-select: none;
+  letter-spacing: 0.5px;
+}
+.ctp-item:hover { background: rgba(192,38,211,0.12); color: var(--color-text); }
+.ctp-item.selected {
+  background: var(--color-accent);
+  color: #fff;
+  font-weight: bold;
+}
+
+/* Colon separator */
+.ctp-colon {
+  font-family: var(--font-pixel);
+  font-size: 10px;
+  color: var(--color-accent);
+  padding: 0 1px;
+  align-self: center;
+}
+
+/* AM / PM buttons */
+.ctp-ampm {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-left: 2px;
+}
+.ctp-ampm-btn {
+  font-family: var(--font-pixel);
+  font-size: 4px;
+  padding: 5px 5px;
+  border-radius: 6px;
+  border: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-muted);
+  cursor: pointer;
+  transition: all 0.15s;
+  letter-spacing: 0.5px;
+}
+.ctp-ampm-btn:hover { border-color: var(--color-accent); color: var(--color-accent); }
+.ctp-ampm-btn.active {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: #fff;
+}
+
+/* Confirm / clear */
+.ctp-confirm {
+  font-family: var(--font-system);
+  font-size: 10px;
+  font-weight: 700;
+  padding: 5px 10px;
+  border-radius: 8px;
+  border: none;
+  background: var(--color-accent);
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.15s;
+  margin-left: 2px;
+  white-space: nowrap;
+}
+.ctp-confirm:hover { background: var(--color-accent-light); }
+
+/* ── Schedule button (reuses .btn-time style) ── */
+.btn-schedule {
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-btn);
+  color: var(--color-muted);
+  font-size: 13px;
+  padding: 0 8px;
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s, background 0.2s;
+  flex-shrink: 0;
+}
+.btn-schedule:hover,
+.btn-schedule.active {
+  color: #38bdf8;
+  border-color: #38bdf8;
+  background: rgba(56,189,248,0.08);
+}
+
+/* ════════════════════════════════════════════════════════
+   UPCOMING PANEL
+   ════════════════════════════════════════════════════════ */
+
+.upcoming-panel {
+  border-top: 1px solid var(--color-border);
+  margin: 4px 12px 8px;
+  border-radius: 0 0 12px 12px;
+}
+.upcoming-panel.hidden { display: none; }
+
+.upcoming-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: none;
+  padding: 8px 4px 6px;
+  cursor: pointer;
+  color: var(--color-muted);
+}
+
+.upcoming-toggle-label {
+  font-family: var(--font-pixel);
+  font-size: var(--fs-micro);
+  letter-spacing: 1.5px;
+  color: var(--color-muted);
+  flex: 1;
+  text-align: left;
+}
+
+.upcoming-count-badge {
+  font-family: var(--font-system);
+  font-size: 9px;
+  font-weight: 700;
+  background: rgba(56,189,248,0.18);
+  color: #38bdf8;
+  border-radius: 10px;
+  padding: 1px 7px;
+  min-width: 18px;
+  text-align: center;
+}
+
+.upcoming-chevron {
+  font-size: 10px;
+  color: var(--color-muted);
+  transition: transform 0.2s;
+}
+.upcoming-panel.open .upcoming-chevron { transform: rotate(180deg); }
+
+.upcoming-list {
+  display: none;
+  flex-direction: column;
+  gap: 4px;
+  padding: 2px 0 8px;
+  animation: slide-down 0.18s ease;
+}
+.upcoming-panel.open .upcoming-list { display: flex; }
+
+/* Group header (the date label) */
+.upcoming-group-header {
+  font-family: var(--font-pixel);
+  font-size: var(--fs-micro);
+  color: #38bdf8;
+  letter-spacing: 1px;
+  padding: 6px 4px 2px;
+  text-transform: uppercase;
+}
+
+/* Individual upcoming task row */
+.upcoming-task-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  transition: border-color 0.2s;
+}
+.upcoming-task-row:hover { border-color: #38bdf8; }
+
+.upcoming-task-cat {
+  width: 4px;
+  min-height: 20px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.upcoming-task-text {
+  font-family: var(--font-pixel);
+  font-size: var(--fs-label);
+  color: var(--color-text-mid);
+  flex: 1;
+  line-height: 1.4;
+}
+
+.upcoming-task-time {
+  font-family: var(--font-system);
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--color-muted);
+  flex-shrink: 0;
+}
+
+.upcoming-task-del {
+  background: transparent;
+  border: none;
+  color: var(--color-muted);
+  font-size: 13px;
+  cursor: pointer;
+  padding: 0 2px;
+  opacity: 0.3;
+  transition: opacity 0.2s, color 0.2s;
+}
+.upcoming-task-row:hover .upcoming-task-del { opacity: 1; }
+.upcoming-task-del:hover { color: #f43f5e; }
+
+/* ════════════════════════════════════════════════════════
+   FUTURE DATE "PLAN THIS DAY" PANEL
+   ════════════════════════════════════════════════════════ */
+
+/* ── Future add-task section inside hist-detail ── */
+.future-add-section        { display: flex; flex-direction: column; gap: 6px; margin-bottom: 6px; }
+.future-add-section.hidden { display: none; }
+
+.future-add-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.future-task-input {
+  flex: 1;
+  padding: 7px 10px !important;
+  font-size: var(--fs-label) !important;
+}
+
+/* Future calendar cells — subtle teal tint */
+.cal-cell.future {
+  opacity: 0.55;
+  cursor: pointer;
+}
+.cal-cell.future:hover {
+  opacity: 1;
+  background: rgba(56,189,248,0.12) !important;
+  border-color: rgba(56,189,248,0.4) !important;
+  color: #38bdf8;
+}
+.cal-cell.future.selected {
+  background: rgba(56,189,248,0.2) !important;
+  border-color: #38bdf8 !important;
+  color: #38bdf8;
+  opacity: 1;
+}
+
+/* Future detail panel */
+.future-detail {
+  margin: 8px 12px 0;
+  background: var(--color-card);
+  border: 1px solid rgba(56,189,248,0.3);
+  border-radius: 14px;
+  padding: 10px 12px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  animation: slide-down 0.2s ease;
+}
+.future-detail.hidden { display: none; }
+
+.future-detail-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.future-detail-date {
+  font-family: var(--font-pixel);
+  font-size: var(--fs-label);
+  color: #38bdf8;
+  letter-spacing: 1px;
+  flex: 1;
+}
+.future-detail-badge {
+  font-family: var(--font-system);
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #38bdf8;
+  background: rgba(56,189,248,0.15);
+  border-radius: 8px;
+  padding: 2px 8px;
+}
+
+.future-add-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.future-task-input {
+  flex: 1;
+  font-size: var(--fs-label) !important;
+  padding: 7px 10px !important;
+}
+
+.future-task-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.future-task-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  transition: border-color 0.2s;
+}
+.future-task-item:hover { border-color: rgba(56,189,248,0.4); }
+
+.future-task-cat-bar {
+  width: 3px;
+  min-height: 18px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+.future-task-text {
+  font-family: var(--font-pixel);
+  font-size: var(--fs-label);
+  color: var(--color-text-mid);
+  flex: 1;
+  line-height: 1.4;
+}
+.future-task-del {
+  background: transparent;
+  border: none;
+  color: var(--color-muted);
+  font-size: 14px;
+  cursor: pointer;
+  padding: 0 3px;
+  opacity: 0.3;
+  transition: opacity 0.2s, color 0.2s;
+}
+.future-task-item:hover .future-task-del { opacity: 1; }
+.future-task-del:hover { color: #f43f5e; }
+
+/* ════════════════════════════════════════════════════════
    FEATURE 3 — QUICK NOTES
    ════════════════════════════════════════════════════════ */
 

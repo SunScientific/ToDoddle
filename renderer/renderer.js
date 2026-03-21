@@ -63,10 +63,15 @@ const carryoverYes    = document.getElementById('carryover-yes');
 const carryoverNo     = document.getElementById('carryover-no');
 
 // ── Feature DOM refs ────────────────────────────────────────────────────────
-const btnTime        = document.getElementById('btn-time');
-const timePickerRow  = document.getElementById('time-picker-row');
-const taskTimeInput  = document.getElementById('task-time-input');
-const timeClearBtn   = document.getElementById('time-clear-btn');
+const btnTime           = document.getElementById('btn-time');
+const timePickerRow     = document.getElementById('time-picker-row');
+const taskTimeInput     = document.getElementById('task-time-input');
+const btnSchedule       = document.getElementById('btn-schedule');
+const schedulePickerRow = document.getElementById('schedule-picker-row');
+const taskDateInput     = document.getElementById('task-date-input');
+const upcomingPanel     = document.getElementById('upcoming-panel');
+const upcomingList      = document.getElementById('upcoming-list');
+const upcomingCountBadge= document.getElementById('upcoming-count-badge');
 const milestoneList  = document.getElementById('milestone-list');
 const milestoneEmpty = document.getElementById('milestone-empty');
 const msModalBackdrop= document.getElementById('milestone-modal-backdrop');
@@ -181,6 +186,8 @@ async function loadDate() {
   const d = await api.getDate();
   dateDayEl.textContent  = String(d.day).padStart(2, '0');
   dateMetaEl.textContent = `${d.weekday}  ${d.month}`;
+  const monthEl = document.getElementById('date-month');
+  if (monthEl) monthEl.textContent = d.month;
 }
 loadDate();
 
@@ -218,8 +225,13 @@ function updateProgress() {
   const prevState = rider.dataset.state;
   if      (total === 0)    rider.dataset.state = 'none';
   else if (done === total) rider.dataset.state = 'done';
-  else if (pct > 20)       rider.dataset.state = 'middle';
+  else if (pct >= 50)      rider.dataset.state = 'middle';
   else                     rider.dataset.state = 'sad';
+
+  // Play gojodance sound once when transitioning to all-done
+  if (rider.dataset.state === 'done' && prevState !== 'done') {
+    SoundFX.gojoDance();
+  }
 
   // Swap image with smooth crossfade
   const STATE_IMG = { done: 'gojohappy.png', middle: 'gojomiddle.png' };
@@ -407,8 +419,19 @@ function createTaskEl(task, isNew = false) {
   const txt = document.createElement('span');
   txt.className   = 'task-text';
   txt.textContent = task.text;
-  txt.title       = 'Double-click to edit';
-  txt.addEventListener('dblclick', () => startEdit(task, txt));
+  txt.title       = 'Click to scratch off · Double-click to edit';
+  // Single-click on text = toggle done; double-click = edit
+  let _clickTimer = null;
+  txt.addEventListener('click', (e) => {
+    e.stopPropagation(); // don't bubble to body (notes expand)
+    if (_clickTimer) { clearTimeout(_clickTimer); _clickTimer = null; return; }
+    _clickTimer = setTimeout(() => { _clickTimer = null; handleToggle(task.id, li); }, 220);
+  });
+  txt.addEventListener('dblclick', (e) => {
+    e.stopPropagation();
+    if (_clickTimer) { clearTimeout(_clickTimer); _clickTimer = null; }
+    startEdit(task, txt);
+  });
 
   topRow.appendChild(txt);
 
@@ -509,28 +532,129 @@ function renderTaskList() {
 }
 
 // ── TODAY: Actions ─────────────────────────────────────────────────────────
-// ── Feature 1: Due Time toggle ──────────────────────────────────────────────
-btnTime.addEventListener('click', () => {
-  const hidden = timePickerRow.classList.toggle('hidden');
-  btnTime.classList.toggle('active', !hidden);
-  if (!hidden) taskTimeInput.focus();
+// ── Custom Time Picker ─────────────────────────────────────────────────────
+(function initTimePicker() {
+  const hoursCol  = document.getElementById('ctp-hours');
+  const minsCol   = document.getElementById('ctp-mins');
+  const amBtn     = document.getElementById('ctp-am');
+  const pmBtn     = document.getElementById('ctp-pm');
+  const confirmBtn= document.getElementById('ctp-confirm');
+
+  let selHour = 8, selMin = 0, selAmPm = 'AM';
+
+  // Build hour items 1–12
+  for (let h = 1; h <= 12; h++) {
+    const el = document.createElement('div');
+    el.className = 'ctp-item' + (h === selHour ? ' selected' : '');
+    el.textContent = String(h).padStart(2, '0');
+    el.dataset.val = h;
+    el.addEventListener('click', () => {
+      selHour = h;
+      hoursCol.querySelectorAll('.ctp-item').forEach(i => i.classList.toggle('selected', Number(i.dataset.val) === selHour));
+    });
+    hoursCol.appendChild(el);
+  }
+
+  // Build minute items 0, 5, 10 … 55
+  for (let m = 0; m < 60; m += 5) {
+    const el = document.createElement('div');
+    el.className = 'ctp-item' + (m === selMin ? ' selected' : '');
+    el.textContent = String(m).padStart(2, '0');
+    el.dataset.val = m;
+    el.addEventListener('click', () => {
+      selMin = m;
+      minsCol.querySelectorAll('.ctp-item').forEach(i => i.classList.toggle('selected', Number(i.dataset.val) === selMin));
+    });
+    minsCol.appendChild(el);
+  }
+
+  // AM / PM toggle
+  amBtn.addEventListener('click', () => { selAmPm = 'AM'; amBtn.classList.add('active'); pmBtn.classList.remove('active'); });
+  pmBtn.addEventListener('click', () => { selAmPm = 'PM'; pmBtn.classList.add('active'); amBtn.classList.remove('active'); });
+
+  // Confirm → write "HH:MM" (24h) into hidden input + update button label
+  confirmBtn.addEventListener('click', () => {
+    let h24 = selHour % 12;
+    if (selAmPm === 'PM') h24 += 12;
+    taskTimeInput.value = `${String(h24).padStart(2,'0')}:${String(selMin).padStart(2,'0')}`;
+    btnTime.textContent = `🕐 ${selHour}:${String(selMin).padStart(2,'0')} ${selAmPm}`;
+    timePickerRow.classList.add('hidden');
+    btnTime.classList.add('active');
+  });
+
+  // Scroll to selected items on open
+  function scrollToSelected() {
+    const selH = hoursCol.querySelector('.selected');
+    const selM = minsCol.querySelector('.selected');
+    if (selH) selH.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    if (selM) selM.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  }
+
+  // Toggle open/close
+  btnTime.addEventListener('click', () => {
+    const isHidden = timePickerRow.classList.toggle('hidden');
+    if (!isHidden) setTimeout(scrollToSelected, 50);
+    if (isHidden && !taskTimeInput.value) btnTime.textContent = '🕐';
+  });
+
+  // Clear button
+  document.getElementById('time-clear-btn').addEventListener('click', () => {
+    taskTimeInput.value = '';
+    btnTime.textContent = '🕐';
+    timePickerRow.classList.add('hidden');
+    btnTime.classList.remove('active');
+  });
+})();
+
+const todayIso = () => new Date().toISOString().slice(0, 10);
+
+// ── Schedule for future date toggle ────────────────────────────────────────
+btnSchedule.addEventListener('click', () => {
+  const hidden = schedulePickerRow.classList.toggle('hidden');
+  btnSchedule.classList.toggle('active', !hidden);
+  if (!hidden) {
+    if (!taskDateInput.value) {
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      taskDateInput.value = tomorrow.toISOString().slice(0, 10);
+    }
+    taskDateInput.focus();
+  }
 });
-timeClearBtn.addEventListener('click', () => {
-  taskTimeInput.value = '';
-  timePickerRow.classList.add('hidden');
-  btnTime.classList.remove('active');
+document.getElementById('schedule-clear-btn').addEventListener('click', () => {
+  taskDateInput.value = '';
+  schedulePickerRow.classList.add('hidden');
+  btnSchedule.classList.remove('active');
 });
 
 async function handleAdd() {
   const text = taskInput.value.trim();
   if (!text) return;
-  const dueTime = taskTimeInput.value || '';
+  const dueTime      = taskTimeInput.value || '';
+  const scheduleDate = taskDateInput.value || '';
+
   taskInput.value = '';
   taskTimeInput.value = '';
+  taskDateInput.value = '';
   timePickerRow.classList.add('hidden');
+  schedulePickerRow.classList.add('hidden');
   btnTime.classList.remove('active');
+  btnTime.textContent = '🕐';
+  btnSchedule.classList.remove('active');
+
+  // Future date → scheduled queue
+  if (scheduleDate && scheduleDate > todayIso()) {
+    await api.addScheduledTask(text, selectedCategory, dueTime, scheduleDate);
+    await renderUpcoming();
+    upcomingPanel.classList.remove('hidden');
+    upcomingPanel.classList.add('open');
+    return;
+  }
+
+  // Today → normal active task
   const task = await api.addTask(text, selectedCategory, dueTime);
   if (!task) return;
+  SoundFX.addTask();
   tasks.push(task);
   const li = createTaskEl(task, true);
   taskList.appendChild(li);
@@ -539,7 +663,9 @@ async function handleAdd() {
 }
 
 async function handleToggle(id, li) {
-  tasks = await api.toggleTask(id);
+  let updated;
+  try { updated = await api.toggleTask(id); } catch (e) { console.error('toggleTask error:', e); return; }
+  tasks = updated;
   const task = tasks.find(t => t.id === id);
   if (!task) return;
   if (task.done) {
@@ -663,20 +789,25 @@ function renderCalendar() {
       cell.dataset.heat = 0;
     }
 
-    // Click → show day detail
     cell.dataset.date = dateStr;
 
     if (dateStr <= todayStr) {
       cell.addEventListener('click', () => loadHistoryDate(dateStr, cell));
+    } else {
+      // Future date — clickable for scheduling
+      cell.addEventListener('click', () => loadFutureDate(dateStr, cell));
     }
 
     calGrid.appendChild(cell);
   }
+
 }
 
 async function loadHistoryDate(dateStr, cell) {
   calGrid.querySelectorAll('.cal-cell.selected').forEach(c => c.classList.remove('selected'));
   cell.classList.add('selected');
+  futureDateActive = null;
+  document.getElementById('future-add-section').classList.add('hidden');
 
   const todayStr = new Date().toISOString().slice(0, 10);
   const isToday  = dateStr === todayStr;
@@ -820,6 +951,111 @@ async function fetchMonthData(year, month) {
     weeks.push({ total: wT, done: wD, rate: wT === 0 ? 0 : Math.round((wD / wT) * 100) });
   }
   return { days, kpis: { total, completed, rate, perfectDays, avgPerDay, maxStreak, topCategory: topCat?.[0] ?? null, bestDay, weeks } };
+}
+
+// ── FUTURE DATE: click to plan ─────────────────────────────────────────────
+let futureDateActive  = null;
+let futureSelCategory = 'hr';
+
+async function loadFutureDate(dateStr, cell) {
+  calGrid.querySelectorAll('.cal-cell.selected').forEach(c => c.classList.remove('selected'));
+  cell.classList.add('selected');
+  futureDateActive = dateStr;
+
+  // Reuse the same hist-detail panel
+  const d = new Date(dateStr + 'T12:00:00');
+  histDetailDate.textContent = d.toLocaleDateString('en-US',
+    { weekday: 'short', month: 'short', day: 'numeric' }).toUpperCase();
+  histDetailSumm.textContent = '';
+
+  // Build category pills once
+  const futureCatRow = document.getElementById('future-category-row');
+  if (!futureCatRow.dataset.built) {
+    futureCatRow.dataset.built = '1';
+    CATEGORIES.forEach(cat => {
+      const btn = document.createElement('button');
+      btn.className = 'cat-pill' + (cat.id === futureSelCategory ? ' active' : '');
+      btn.textContent = cat.label;
+      btn.style.setProperty('--cat-color', cat.color);
+      btn.dataset.catId = cat.id;
+      btn.addEventListener('click', () => {
+        futureSelCategory = cat.id;
+        futureCatRow.querySelectorAll('.cat-pill').forEach(p =>
+          p.classList.toggle('active', p.dataset.catId === cat.id));
+      });
+      futureCatRow.appendChild(btn);
+    });
+  }
+
+  // Show add-section, load existing scheduled tasks into the list
+  document.getElementById('future-add-section').classList.remove('hidden');
+  histDetail.classList.remove('hidden');
+  await loadScheduledTasksIntoList(dateStr);
+  document.getElementById('future-task-input').focus();
+}
+
+async function loadScheduledTasksIntoList(dateStr) {
+  const all    = await api.getScheduledTasks();
+  const forDay = all.filter(t => t.scheduledDate === dateStr);
+  histDetailList.innerHTML = '';
+  histDetailEmpty.classList.toggle('hidden', forDay.length > 0);
+  histDetailSumm.textContent = forDay.length ? `${forDay.length} planned` : '';
+
+  forDay.forEach(t => {
+    const cat = getCat(t.category);
+    const li  = document.createElement('li');
+    li.className = 'hist-task-row';                         // reuse existing row style
+
+    const colorBar = document.createElement('span');
+    colorBar.style.cssText = `display:inline-block;width:3px;min-height:16px;border-radius:2px;background:${cat.color};margin-right:6px;flex-shrink:0`;
+
+    const txt = document.createElement('span');
+    txt.className = 'hist-task-txt';
+    txt.textContent = t.text;
+
+    const catTag = document.createElement('span');
+    catTag.className = 'task-cat-tag';
+    catTag.textContent = cat.label;
+    catTag.style.setProperty('--cat-color', cat.color);
+    catTag.style.cssText += ';margin-left:6px';
+
+    const del = document.createElement('button');
+    del.className = 'hist-task-del';
+    del.textContent = '×';
+    del.addEventListener('click', async () => {
+      li.style.opacity = '0';
+      li.style.transition = 'opacity 0.18s';
+      await new Promise(r => setTimeout(r, 180));
+      await api.deleteScheduledTask(t.id);
+      const rem = (await api.getScheduledTasks()).filter(s => s.scheduledDate === dateStr);
+      const c = calGrid.querySelector(`[data-date="${dateStr}"]`);
+
+      loadScheduledTasksIntoList(dateStr);
+    });
+
+    li.appendChild(colorBar);
+    li.appendChild(txt);
+    li.appendChild(catTag);
+    li.appendChild(del);
+    histDetailList.appendChild(li);
+  });
+}
+
+document.getElementById('future-btn-add').addEventListener('click', addFutureTask);
+document.getElementById('future-task-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') addFutureTask();
+});
+
+async function addFutureTask() {
+  const input = document.getElementById('future-task-input');
+  const text  = input.value.trim();
+  if (!text || !futureDateActive) return;
+  input.value = '';
+  await api.addScheduledTask(text, futureSelCategory, '', futureDateActive);
+  const c = calGrid.querySelector(`[data-date="${futureDateActive}"]`);
+
+  loadScheduledTasksIntoList(futureDateActive);
+  input.focus();
 }
 
 // ── SUMMARY VIEW ───────────────────────────────────────────────────────────
@@ -1404,11 +1640,84 @@ msTitleInput.addEventListener('keydown', e => {
   if (e.key === 'Escape') msModalBackdrop.classList.add('hidden');
 });
 
+// ── Upcoming scheduled tasks panel ────────────────────────────────────────
+async function renderUpcoming() {
+  await api.promoteScheduledTasks();
+  const scheduled = await api.getScheduledTasks();
+
+  if (!scheduled.length) { upcomingPanel.classList.add('hidden'); return; }
+
+  upcomingPanel.classList.remove('hidden');
+  upcomingCountBadge.textContent = scheduled.length;
+
+  const groups = {};
+  scheduled.forEach(t => {
+    if (!groups[t.scheduledDate]) groups[t.scheduledDate] = [];
+    groups[t.scheduledDate].push(t);
+  });
+
+  upcomingList.innerHTML = '';
+  Object.keys(groups).sort().forEach(dateStr => {
+    const header = document.createElement('div');
+    header.className = 'upcoming-group-header';
+    const d = new Date(dateStr + 'T12:00:00');
+    header.textContent = d.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+    upcomingList.appendChild(header);
+
+    groups[dateStr].forEach(t => {
+      const row = document.createElement('div');
+      row.className = 'upcoming-task-row';
+      const cat = getCat(t.category);
+
+      const colorBar = document.createElement('div');
+      colorBar.className = 'upcoming-task-cat';
+      colorBar.style.background = cat.color;
+
+      const txt = document.createElement('span');
+      txt.className = 'upcoming-task-text';
+      txt.textContent = t.text;
+
+      const delBtn = document.createElement('button');
+      delBtn.className = 'upcoming-task-del';
+      delBtn.textContent = '×';
+      delBtn.addEventListener('click', async () => {
+        row.style.opacity = '0'; row.style.transition = 'opacity 0.2s';
+        await new Promise(r => setTimeout(r, 200));
+        await api.deleteScheduledTask(t.id);
+        renderUpcoming();
+      });
+
+      row.appendChild(colorBar);
+      row.appendChild(txt);
+      if (t.dueTime) {
+        const timeEl = document.createElement('span');
+        timeEl.className = 'upcoming-task-time';
+        timeEl.textContent = formatTime12(t.dueTime);
+        row.appendChild(timeEl);
+      }
+      row.appendChild(delBtn);
+      upcomingList.appendChild(row);
+    });
+  });
+}
+
+document.getElementById('upcoming-toggle').addEventListener('click', () => {
+  upcomingPanel.classList.toggle('open');
+});
+
+// Auto-reload tasks when scheduler promotes on a new day
+api.onScheduledPromoted(async () => {
+  tasks = await api.getTasks();
+  renderTaskList();
+  renderUpcoming();
+});
+
 // ── Init ───────────────────────────────────────────────────────────────────
 async function init() {
   tasks = await api.getTasks();
   renderTaskList();
   checkCarryOver();
+  renderUpcoming();
 }
 
 init();

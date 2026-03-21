@@ -22,7 +22,12 @@ contextBridge.exposeInMainWorld('todoDoddle', {
   updateMilestoneProgress:  (id, progress)         => ipcRenderer.invoke('update-milestone-progress', id, progress),
   deleteMilestone:          (id)                   => ipcRenderer.invoke('delete-milestone', id),
   exportPdf:                ()                     => ipcRenderer.invoke('export-pdf'),
-  onDayReset:               (cb)                  => ipcRenderer.on('day-reset', cb),
+  getScheduledTasks:        ()                              => ipcRenderer.invoke('get-scheduled-tasks'),
+  addScheduledTask:         (text, cat, dueTime, date)     => ipcRenderer.invoke('add-scheduled-task', text, cat, dueTime, date),
+  deleteScheduledTask:      (id)                           => ipcRenderer.invoke('delete-scheduled-task', id),
+  promoteScheduledTasks:    ()                             => ipcRenderer.invoke('promote-scheduled-tasks'),
+  onDayReset:               (cb)                           => ipcRenderer.on('day-reset', cb),
+  onScheduledPromoted:      (cb)                           => ipcRenderer.on('scheduled-tasks-promoted', cb),
   minimize:                 ()                     => ipcRenderer.send('window-minimize'),
   close:                    ()                     => ipcRenderer.send('window-close')
 });

@@ -96,14 +96,32 @@
             autocomplete="off"
             spellcheck="false"
           />
-          <button class="btn-time" id="btn-time" title="Set due time">🕐</button>
-          <button class="btn-add"  id="btn-add">+</button>
+          <button class="btn-time"     id="btn-time"     title="Set due time">🕐</button>
+          <button class="btn-schedule" id="btn-schedule" title="Schedule for future date">📅</button>
+          <button class="btn-add"      id="btn-add">+</button>
         </div>
-        <!-- Time picker row (hidden until clock icon clicked) -->
-        <div class="time-picker-row hidden" id="time-picker-row">
-          <label class="time-picker-label">Due time</label>
-          <input type="time" id="task-time-input" class="task-time-input" />
-          <button class="time-clear-btn" id="time-clear-btn">✕</button>
+        <!-- Date scheduler row (hidden until calendar icon clicked) -->
+        <div class="time-picker-row hidden" id="schedule-picker-row">
+          <label class="time-picker-label">Schedule for</label>
+          <input type="date" id="task-date-input" class="task-time-input" />
+          <button class="time-clear-btn" id="schedule-clear-btn">✕</button>
+        </div>
+
+        <!-- Custom time picker (hidden until clock icon clicked) -->
+        <div class="ctp-wrapper hidden" id="time-picker-row">
+          <!-- Hidden input stores the actual HH:MM value -->
+          <input type="hidden" id="task-time-input" />
+          <div class="ctp-panel">
+            <div class="ctp-col" id="ctp-hours"></div>
+            <div class="ctp-colon">:</div>
+            <div class="ctp-col" id="ctp-mins"></div>
+            <div class="ctp-ampm">
+              <button class="ctp-ampm-btn active" id="ctp-am">AM</button>
+              <button class="ctp-ampm-btn"         id="ctp-pm">PM</button>
+            </div>
+            <button class="ctp-confirm" id="ctp-confirm">Set</button>
+            <button class="time-clear-btn" id="time-clear-btn">✕</button>
+          </div>
         </div>
         <div class="category-row" id="category-row">
           <!-- Category pills rendered by JS -->
@@ -126,6 +144,16 @@
           <p>no doodles yet!</p>
           <p>add one above ↑</p>
         </div>
+      </div>
+
+      <!-- Upcoming scheduled tasks panel -->
+      <div class="upcoming-panel hidden" id="upcoming-panel">
+        <button class="upcoming-toggle" id="upcoming-toggle">
+          <span class="upcoming-toggle-label">UPCOMING</span>
+          <span class="upcoming-count-badge" id="upcoming-count-badge">0</span>
+          <span class="upcoming-chevron" id="upcoming-chevron">▾</span>
+        </button>
+        <div class="upcoming-list" id="upcoming-list"></div>
       </div>
 
     </div>
@@ -155,7 +183,7 @@
         <div class="cal-grid" id="cal-grid"></div>
       </div>
 
-      <!-- Day detail panel — shown when a date is clicked -->
+      <!-- Day detail panel — past (read-only) + future (editable) -->
       <div class="hist-detail hidden" id="hist-detail">
         <div class="hist-detail-header">
           <span class="hist-detail-date"    id="hist-detail-date">–</span>

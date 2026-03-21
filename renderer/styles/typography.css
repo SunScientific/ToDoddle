@@ -57,6 +57,7 @@
   color: var(--color-text);
   line-height: 1.6;
   word-break: break-word;
+  cursor: pointer;
 }
 .task-item.done .task-text { color: var(--color-done-text); }
 

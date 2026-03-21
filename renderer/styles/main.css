@@ -89,7 +89,7 @@ body {
   flex-shrink: 0;
   animation: hue-drift 9s ease-in-out infinite; /* #8 */
 }
-.date-display { display: flex; align-items: baseline; }
+.date-display { display: flex; align-items: baseline; gap: 2px; }
 .date-meta {
   display: flex;
   align-items: center;

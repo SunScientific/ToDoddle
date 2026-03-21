@@ -26,6 +26,11 @@ const schema = {
     type: 'array',
     default: [],
     items: { type: 'object' }
+  },
+  scheduledTasks: {
+    type: 'array',
+    default: [],
+    items: { type: 'object' }
   }
 };
 
@@ -283,6 +288,61 @@ function listArchiveSummaries() {
   });
 }
 
+// ── Scheduled Tasks ────────────────────────────────────────────────────────
+function getScheduledTasks() {
+  return store.get('scheduledTasks') || [];
+}
+
+function addScheduledTask(text, category, dueTime, scheduledDate) {
+  const scheduled = getScheduledTasks();
+  const task = {
+    id:            String(Date.now()),
+    text:          (text || '').trim(),
+    category:      category || 'other',
+    dueTime:       dueTime  || '',
+    notes:         '',
+    scheduledDate: scheduledDate,
+    createdAt:     new Date().toISOString()
+  };
+  scheduled.push(task);
+  store.set('scheduledTasks', scheduled);
+  return task;
+}
+
+function deleteScheduledTask(id) {
+  const scheduled = getScheduledTasks().filter(t => t.id !== id);
+  store.set('scheduledTasks', scheduled);
+  return scheduled;
+}
+
+/** Moves any scheduled tasks with scheduledDate <= today into active tasks.
+ *  Returns the number of tasks promoted. */
+function promoteScheduledTasks() {
+  const todayStr = today();
+  const scheduled = getScheduledTasks();
+  const due  = scheduled.filter(t => t.scheduledDate <= todayStr);
+  const rest = scheduled.filter(t => t.scheduledDate >  todayStr);
+
+  if (!due.length) return 0;
+
+  const active = getTasks();
+  due.forEach(t => {
+    active.push({
+      id:        t.id,
+      text:      t.text,
+      done:      false,
+      priority:  false,
+      category:  t.category,
+      dueTime:   t.dueTime,
+      notes:     t.notes || '',
+      createdAt: t.createdAt
+    });
+  });
+  store.set('tasks', active);
+  store.set('scheduledTasks', rest);
+  return due.length;
+}
+
 // ── Milestones ─────────────────────────────────────────────────────────────
 function getMilestones() {
   return store.get('milestones') || [];
@@ -325,6 +385,10 @@ module.exports = {
   today,
   getTasks,
   addTask,
+  getScheduledTasks,
+  addScheduledTask,
+  deleteScheduledTask,
+  promoteScheduledTasks,
   toggleTask,
   deleteTask,
   deleteArchivedTask,

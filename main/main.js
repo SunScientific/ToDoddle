@@ -5,7 +5,8 @@ const {
   reorderTasks, updateTask, updateNotes, getYesterdayUnfinished, listArchiveSummaries,
   today, getCurrentDate, setCurrentDate,
   getArchive, listArchiveDates, getWeekData, getMonthData,
-  getMilestones, addMilestone, updateMilestoneProgress, deleteMilestone
+  getMilestones, addMilestone, updateMilestoneProgress, deleteMilestone,
+  getScheduledTasks, addScheduledTask, deleteScheduledTask, promoteScheduledTasks
 } = require('./store');
 const { startMidnightWatch, stopMidnightWatch } = require('./scheduler');
 
@@ -181,6 +182,11 @@ ipcMain.handle('export-pdf', async () => {
     return { success: false, error: err.message };
   }
 });
+
+ipcMain.handle('get-scheduled-tasks',    ()                              => getScheduledTasks());
+ipcMain.handle('add-scheduled-task',     (_, text, cat, dueTime, date)  => addScheduledTask(text, cat, dueTime, date));
+ipcMain.handle('delete-scheduled-task',  (_, id)                        => deleteScheduledTask(id));
+ipcMain.handle('promote-scheduled-tasks',()                              => promoteScheduledTasks());
 
 // Window controls
 ipcMain.on('window-minimize', () => mainWindow && mainWindow.minimize());

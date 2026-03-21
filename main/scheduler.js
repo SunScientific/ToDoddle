@@ -1,4 +1,4 @@
-const { today, getCurrentDate, resetForNewDay } = require('./store');
+const { today, getCurrentDate, resetForNewDay, promoteScheduledTasks } = require('./store');
 
 let intervalId = null;
 
@@ -11,6 +11,11 @@ function checkAndReset(mainWindow) {
     if (mainWindow && !mainWindow.isDestroyed()) {
       mainWindow.webContents.send('day-reset');
     }
+  }
+  // Promote any scheduled tasks that are now due (runs on every check)
+  const promoted = promoteScheduledTasks();
+  if (promoted > 0 && mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send('scheduled-tasks-promoted', promoted);
   }
 }
 
