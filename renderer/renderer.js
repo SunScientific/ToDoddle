@@ -606,7 +606,8 @@ function renderTaskList() {
   });
 })();
 
-const todayIso = () => new Date().toISOString().slice(0, 10);
+const localDateStr = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+const todayIso = () => localDateStr();
 
 // ── Schedule for future date toggle ────────────────────────────────────────
 btnSchedule.addEventListener('click', () => {
@@ -616,7 +617,7 @@ btnSchedule.addEventListener('click', () => {
     if (!taskDateInput.value) {
       const tomorrow = new Date();
       tomorrow.setDate(tomorrow.getDate() + 1);
-      taskDateInput.value = tomorrow.toISOString().slice(0, 10);
+      taskDateInput.value = localDateStr(new Date(Date.now() + 86400000));
     }
     taskDateInput.focus();
   }
@@ -751,7 +752,7 @@ function renderCalendar() {
   const firstDow    = new Date(year, month, 1).getDay();
   const startOffset = firstDow === 0 ? 6 : firstDow - 1;
   const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const todayStr    = new Date().toISOString().slice(0, 10);
+  const todayStr    = todayIso();
 
   calGrid.innerHTML = '';
 
@@ -809,7 +810,7 @@ async function loadHistoryDate(dateStr, cell) {
   futureDateActive = null;
   document.getElementById('future-add-section').classList.add('hidden');
 
-  const todayStr = new Date().toISOString().slice(0, 10);
+  const todayStr = todayIso();
   const isToday  = dateStr === todayStr;
   const histTasks = isToday
     ? tasks
@@ -903,12 +904,12 @@ async function fetchWeekData(offsetWeeks = 0) {
   const monday = new Date(d);
   monday.setDate(d.getDate() + (dow === 0 ? -6 : 1 - dow) + offsetWeeks * 7);
   monday.setHours(0, 0, 0, 0);
-  const todayStr = new Date().toISOString().slice(0, 10);
+  const todayStr = todayIso();
   const week = [];
   for (let i = 0; i < 7; i++) {
     const day = new Date(monday);
     day.setDate(monday.getDate() + i);
-    const dateStr = day.toISOString().slice(0, 10);
+    const dateStr = localDateStr(day);
     let dayTasks = [];
     if (dateStr === todayStr)       dayTasks = await api.getTasks();
     else if (dateStr < todayStr)    dayTasks = (await api.getArchive(dateStr))?.tasks || [];
@@ -918,7 +919,7 @@ async function fetchWeekData(offsetWeeks = 0) {
 }
 
 async function fetchMonthData(year, month) {
-  const todayStr    = new Date().toISOString().slice(0, 10);
+  const todayStr    = todayIso();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const days = [];
   for (let d = 1; d <= daysInMonth; d++) {
@@ -1087,7 +1088,7 @@ weekNext.addEventListener('click', async () => { if (weekOffset < 0) { weekOffse
 
 function renderWeekStrip(weekData) {
   weekDaysStrip.innerHTML = '';
-  const todayStr = new Date().toISOString().slice(0, 10);
+  const todayStr = todayIso();
 
   weekData.forEach(({ date, dayName, tasks: dayTasks }) => {
     const total = dayTasks.length;
@@ -1425,7 +1426,7 @@ function closeCatModal() {
 
 function renderStats(weekData) {
   statsRowEl.innerHTML = '';
-  const todayStr = new Date().toISOString().slice(0, 10);
+  const todayStr = todayIso();
   const pastDays = weekData.filter(d => d.date <= todayStr);
   const allTasks = pastDays.flatMap(d => d.tasks);
   const total    = allTasks.length;
@@ -1460,12 +1461,9 @@ function renderStats(weekData) {
 
 // ── Day reset ──────────────────────────────────────────────────────────────
 api.onDayReset(() => {
-  tasks = [];
-  renderTaskList();
   loadDate();
   dateDayEl.classList.add('resetting');
   setTimeout(() => dateDayEl.classList.remove('resetting'), 1300);
-  checkCarryOver();
 });
 
 // ════════════════════════════════════════════════════════

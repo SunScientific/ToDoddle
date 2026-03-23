@@ -36,8 +36,12 @@ const schema = {
 
 const store = new Store({ schema });
 
+function localDate(d = new Date()) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
 function today() {
-  return new Date().toISOString().slice(0, 10);
+  return localDate();
 }
 
 function getTasks() {
@@ -100,8 +104,8 @@ function archiveCurrentDay() {
 
 function resetForNewDay() {
   archiveCurrentDay();
-  store.set('tasks', []);
   store.set('currentDate', today());
+  // Tasks are never auto-cleared — they persist until manually deleted
 }
 
 function getCurrentDate() {
@@ -151,7 +155,7 @@ function getWeekData(offsetWeeks = 0) {
   return Array.from({ length: 7 }, (_, i) => {
     const day = new Date(monday);
     day.setDate(monday.getDate() + i);
-    const dateStr = day.toISOString().slice(0, 10);
+    const dateStr = localDate(day);
     let dayTasks = [];
     if (dateStr === todayStr) {
       dayTasks = getTasks();
@@ -263,7 +267,7 @@ function deleteArchivedTask(date, taskId) {
 function getYesterdayUnfinished() {
   const d = new Date();
   d.setDate(d.getDate() - 1);
-  const yesterdayStr = d.toISOString().slice(0, 10);
+  const yesterdayStr = localDate(d);
   const archive = getArchive(yesterdayStr);
   if (!archive) return [];
   return archive.tasks.filter(t => !t.done);

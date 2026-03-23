@@ -100,6 +100,19 @@ function createWindow() {
   });
 }
 
+// Prevent duplicate instances — bring existing window to front instead
+const gotLock = app.requestSingleInstanceLock();
+if (!gotLock) {
+  app.quit();
+} else {
+  app.on('second-instance', () => {
+    if (mainWindow) {
+      if (!mainWindow.isVisible()) mainWindow.show();
+      mainWindow.focus();
+    }
+  });
+}
+
 app.whenReady().then(() => {
   if (!getCurrentDate()) setCurrentDate(today());
   createWindow();
@@ -135,7 +148,7 @@ ipcMain.handle('prioritize-task', (_, id) => prioritizeTask(id));
 ipcMain.handle('get-date', () => {
   const d = new Date();
   return {
-    iso:     d.toISOString().slice(0, 10),
+    iso:     `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`,
     day:     d.getDate(),
     month:   d.toLocaleString('en-US', { month: 'long' }).toUpperCase(),
     weekday: d.toLocaleString('en-US', { weekday: 'short' }).toUpperCase(),
