@@ -40,8 +40,14 @@ function localDate(d = new Date()) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
+function todayEST() {
+  // Convert current time to EST and return YYYY-MM-DD in EST
+  const estTime = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/New_York' }));
+  return localDate(estTime);
+}
+
 function today() {
-  return localDate();
+  return todayEST();
 }
 
 function getTasks() {
@@ -103,9 +109,15 @@ function archiveCurrentDay() {
 }
 
 function resetForNewDay() {
+  // Archive all tasks from yesterday (completed and pending)
   archiveCurrentDay();
+
+  // Move pending tasks to today, keep completed in archive
+  const currentTasks = getTasks();
+  const pendingTasks = currentTasks.filter(t => !t.done);
+
+  store.set('tasks', pendingTasks);
   store.set('currentDate', today());
-  // Tasks are never auto-cleared — they persist until manually deleted
 }
 
 function getCurrentDate() {
@@ -264,10 +276,50 @@ function deleteArchivedTask(date, taskId) {
   }
 }
 
+function moveCompletedTasksToYesterday() {
+  // Move all completed tasks from today to yesterday's archive
+  const currentTasks = getTasks();
+  const completedTasks = currentTasks.filter(t => t.done);
+  const pendingTasks = currentTasks.filter(t => !t.done);
+
+  if (completedTasks.length === 0) return 0;
+
+  // Get yesterday's date and archive
+  const estDate = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/New_York' }));
+  estDate.setDate(estDate.getDate() - 1);
+  const yesterdayStr = localDate(estDate);
+
+  const archiveDir = getArchiveDir();
+  fs.mkdirSync(archiveDir, { recursive: true });
+  const archiveFile = path.join(archiveDir, `${yesterdayStr}.json`);
+
+  // Load yesterday's archive if it exists
+  let yesterdayData = { date: yesterdayStr, archivedAt: new Date().toISOString(), tasks: [], summary: { total: 0, completed: 0 } };
+  try {
+    const existing = fs.readFileSync(archiveFile, 'utf8');
+    yesterdayData = JSON.parse(existing);
+  } catch {
+    // File doesn't exist, we'll create it
+  }
+
+  // Merge completed tasks into yesterday's archive
+  yesterdayData.tasks.push(...completedTasks);
+  yesterdayData.summary = {
+    total: yesterdayData.tasks.length,
+    completed: yesterdayData.tasks.filter(t => t.done).length
+  };
+  fs.writeFileSync(archiveFile, JSON.stringify(yesterdayData, null, 2));
+
+  // Keep only pending tasks in today's list
+  store.set('tasks', pendingTasks);
+
+  return completedTasks.length;
+}
+
 function getYesterdayUnfinished() {
-  const d = new Date();
-  d.setDate(d.getDate() - 1);
-  const yesterdayStr = localDate(d);
+  const estDate = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/New_York' }));
+  estDate.setDate(estDate.getDate() - 1);
+  const yesterdayStr = localDate(estDate);
   const archive = getArchive(yesterdayStr);
   if (!archive) return [];
   return archive.tasks.filter(t => !t.done);
@@ -400,6 +452,7 @@ module.exports = {
   reorderTasks,
   updateTask,
   updateNotes,
+  moveCompletedTasksToYesterday,
   getYesterdayUnfinished,
   listArchiveSummaries,
   resetForNewDay,

@@ -20,7 +20,8 @@ let currentTab = 'today';
 let selectedCategory = 'hr';
 let currentMonthData = null;
 let currentMonthName = '';
-let calMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+const estNow = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/New_York' }));
+let calMonth = new Date(estNow.getFullYear(), estNow.getMonth(), 1);
 let archiveDates = new Set();
 let archiveSummaries = new Map(); // date -> { total, completed }
 let weekOffset = 0; // 0 = current week, -1 = last week, etc.
@@ -225,7 +226,7 @@ function updateProgress() {
   const prevState = rider.dataset.state;
   if      (total === 0)    rider.dataset.state = 'none';
   else if (done === total) rider.dataset.state = 'done';
-  else if (pct >= 50)      rider.dataset.state = 'middle';
+  else if (pct >= 20)      rider.dataset.state = 'middle';
   else                     rider.dataset.state = 'sad';
 
   // Play gojodance sound once when transitioning to all-done
@@ -606,7 +607,11 @@ function renderTaskList() {
   });
 })();
 
-const localDateStr = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+const localDateStr = (d = new Date()) => {
+  // Convert to EST timezone
+  const estDate = new Date(d.toLocaleString('en-US', { timeZone: 'America/New_York' }));
+  return `${estDate.getFullYear()}-${String(estDate.getMonth()+1).padStart(2,'0')}-${String(estDate.getDate()).padStart(2,'0')}`;
+};
 const todayIso = () => localDateStr();
 
 // ── Schedule for future date toggle ────────────────────────────────────────
@@ -615,9 +620,10 @@ btnSchedule.addEventListener('click', () => {
   btnSchedule.classList.toggle('active', !hidden);
   if (!hidden) {
     if (!taskDateInput.value) {
-      const tomorrow = new Date();
+      const estDate = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/New_York' }));
+      const tomorrow = new Date(estDate);
       tomorrow.setDate(tomorrow.getDate() + 1);
-      taskDateInput.value = localDateStr(new Date(Date.now() + 86400000));
+      taskDateInput.value = localDateStr(tomorrow);
     }
     taskDateInput.focus();
   }

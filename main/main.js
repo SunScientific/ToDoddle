@@ -6,7 +6,8 @@ const {
   today, getCurrentDate, setCurrentDate,
   getArchive, listArchiveDates, getWeekData, getMonthData,
   getMilestones, addMilestone, updateMilestoneProgress, deleteMilestone,
-  getScheduledTasks, addScheduledTask, deleteScheduledTask, promoteScheduledTasks
+  getScheduledTasks, addScheduledTask, deleteScheduledTask, promoteScheduledTasks,
+  moveCompletedTasksToYesterday
 } = require('./store');
 const { startMidnightWatch, stopMidnightWatch } = require('./scheduler');
 
@@ -117,6 +118,9 @@ app.whenReady().then(() => {
   if (!getCurrentDate()) setCurrentDate(today());
   createWindow();
   setupTray();
+  // Move any completed tasks from today to yesterday's archive on startup
+  const moved = moveCompletedTasksToYesterday();
+  if (moved > 0) console.log(`[startup] Moved ${moved} completed tasks to yesterday's archive`);
   startMidnightWatch(mainWindow);
 });
 
