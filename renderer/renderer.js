@@ -818,9 +818,11 @@ async function loadHistoryDate(dateStr, cell) {
 
   const todayStr = todayIso();
   const isToday  = dateStr === todayStr;
-  const histTasks = isToday
+  const rawTasks = isToday
     ? tasks
     : ((await api.getArchive(dateStr))?.tasks || []);
+  // History only shows completed (scratched off) tasks
+  const histTasks = isToday ? rawTasks : rawTasks.filter(t => t.done);
 
   const d = new Date(dateStr + 'T12:00:00');
   histDetailDate.textContent = d.toLocaleDateString('en-US', {

@@ -93,29 +93,31 @@ function archiveCurrentDay() {
   if (!currentDate) return;
 
   const tasks = getTasks();
+  const doneTasks = tasks.filter(t => t.done);
   const archiveDir = path.join(app.getPath('userData'), 'archive');
   fs.mkdirSync(archiveDir, { recursive: true });
 
   const archiveFile = path.join(archiveDir, `${currentDate}.json`);
-  const total = tasks.length;
-  const completed = tasks.filter(t => t.done).length;
+
+  // Merge with any existing archive for this date (don't overwrite prior done tasks)
+  let existing = [];
+  try { existing = JSON.parse(fs.readFileSync(archiveFile, 'utf8')).tasks || []; } catch {}
+  const merged = [...existing.filter(e => !doneTasks.find(d => d.id === e.id)), ...doneTasks];
 
   fs.writeFileSync(archiveFile, JSON.stringify({
     date: currentDate,
     archivedAt: new Date().toISOString(),
-    tasks,
-    summary: { total, completed }
+    tasks: merged,
+    summary: { total: merged.length, completed: merged.filter(t => t.done).length }
   }, null, 2));
 }
 
 function resetForNewDay() {
-  // Archive all tasks from yesterday (completed and pending)
+  // Archive only completed tasks from the previous day
   archiveCurrentDay();
 
-  // Move pending tasks to today, keep completed in archive
-  const currentTasks = getTasks();
-  const pendingTasks = currentTasks.filter(t => !t.done);
-
+  // Carry pending tasks forward to today; drop completed ones
+  const pendingTasks = getTasks().filter(t => !t.done);
   store.set('tasks', pendingTasks);
   store.set('currentDate', today());
 }
