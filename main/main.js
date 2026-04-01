@@ -160,7 +160,13 @@ ipcMain.handle('get-date', () => {
   };
 });
 
-ipcMain.handle('get-archive',        (_, date)           => getArchive(date));
+ipcMain.handle('get-archive', (_, date) => {
+  const data = getArchive(date);
+  if (!data) return null;
+  // History only shows done (scratched off) tasks — pending tasks carry forward
+  const doneTasks = data.tasks.filter(t => t.done);
+  return { ...data, tasks: doneTasks, summary: { total: doneTasks.length, completed: doneTasks.length } };
+});
 ipcMain.handle('list-archive-dates', ()                  => listArchiveDates());
 ipcMain.handle('get-week-data',      (_, offset = 0)     => getWeekData(offset));
 ipcMain.handle('get-month-data',     (_, year, month)    => getMonthData(year, month));
